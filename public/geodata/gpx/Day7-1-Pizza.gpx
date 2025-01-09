@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="https://gpx.studio" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/PowerExtension/v1 http://www.garmin.com/xmlschemas/PowerExtensionv1.xsd http://www.topografix.com/GPX/gpx_style/0/2 http://www.topografix.com/GPX/gpx_style/0/2/gpx_style.xsd" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxpx="http://www.garmin.com/xmlschemas/PowerExtension/v1" xmlns:gpx_style="http://www.topografix.com/GPX/gpx_style/0/2">
+  <metadata>
+    <name>New file 1</name>
+    <author>
+      <name>gpx.studio</name>
+      <link href="https://gpx.studio"/>
+    </author>
+  </metadata>
+  <trk>
+    <name>New file 1</name>
+    <trkseg>
+      <trkpt lat="46.669998" lon="11.153007">
+        <ele>307.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>residential</highway>
+              <surface>asphalt</surface>
+              <route_bicycle_lcn>yes</route_bicycle_lcn>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.669971" lon="11.152762">
+        <ele>307.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>both</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.670014" lon="11.152752">
+        <ele>307.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>both</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.670827" lon="11.152593">
+        <ele>306</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>both</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.670839" lon="11.15259">
+        <ele>306</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.670943" lon="11.152597">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671084" lon="11.152558">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.67112" lon="11.152551">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671149" lon="11.152556">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671191" lon="11.152598">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.67123" lon="11.152611">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.67123" lon="11.152611">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.67127" lon="11.152606">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671307" lon="11.152582">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671337" lon="11.152543">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671354" lon="11.152499">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671363" lon="11.152432">
+        <ele>306.5</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671483" lon="11.152276">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.671721" lon="11.151968">
+        <ele>306.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.672457" lon="11.151042">
+        <ele>307</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.672641" lon="11.150802">
+        <ele>305.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>right</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.672942" lon="11.150424">
+        <ele>301.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>left</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673168" lon="11.150121">
+        <ele>300.25</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>left</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673347" lon="11.149893">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673368" lon="11.149862">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673381" lon="11.149841">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673393" lon="11.149824">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <sidewalk>no</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673412" lon="11.149799">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.67344" lon="11.149816">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673476" lon="11.149813">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673513" lon="11.14978">
+        <ele>299.75</ele>
+      </trkpt>
+      <trkpt lat="46.673513" lon="11.14978">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673527" lon="11.14975">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>tertiary</highway>
+              <surface>asphalt</surface>
+              <junction>roundabout</junction>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673532" lon="11.149692">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>residential</highway>
+              <surface>asphalt</surface>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673598" lon="11.149696">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>residential</highway>
+              <surface>asphalt</surface>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673661" lon="11.149738">
+        <ele>299.75</ele>
+      </trkpt>
+      <trkpt lat="46.673661" lon="11.149738">
+        <ele>299.75</ele>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <reversedirection>yes</reversedirection>
+              <highway>residential</highway>
+              <surface>asphalt</surface>
+              <sidewalk>both</sidewalk>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="46.673661" lon="11.149738">
+        <ele>299.4374058118094</ele>
+      </trkpt>
+      <trkpt lat="46.67410807512184" lon="11.149667833180624">
+        <ele>298.6136594839864</ele>
+      </trkpt>
+      <trkpt lat="46.67455515024369" lon="11.149597666361249">
+        <ele>299.50825184052894</ele>
+      </trkpt>
+      <trkpt lat="46.67466982926325" lon="11.14957966790493">
+        <ele>299.9742181624012</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
