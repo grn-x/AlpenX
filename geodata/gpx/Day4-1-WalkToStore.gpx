@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="https://www.komoot.de" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/PowerExtension/v1 http://www.garmin.com/xmlschemas/PowerExtensionv1.xsd http://www.topografix.com/GPX/gpx_style/0/2 http://www.topografix.com/GPX/gpx_style/0/2/gpx_style.xsd" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxpx="http://www.garmin.com/xmlschemas/PowerExtension/v1" xmlns:gpx_style="http://www.topografix.com/GPX/gpx_style/0/2">
+  <metadata>
+    <name>Alpenüberquerung2</name>
+    <author>
+      <name>gpx.studio</name>
+      <link href="https://gpx.studio"/>
+    </author>
+  </metadata>
+  <wpt lat="47.3134051" lon="10.3277716">
+    <ele>1848.3911054020841</ele>
+    <name>Kemptner Hütte</name>
+    <cmt>building: yes
+capacity:overnight: 285
+capacity:winter_room: 26
+cuisine: regional
+diet:vegetarian: yes
+ele: 1846
+internet_access: no
+name: Kemptner Hütte
+operator: DAV Sektion Allgäu-Kempten
+operator:tenant: Gabriele Braxmair
+payment:cash: yes
+payment:credit_cards: no
+payment:girocard: no
+phone: +49 8322 700152
+ref:avf: 290
+shower: yes
+smoking: no
+staff: season
+tourism: alpine_hut
+website: https://www.kemptner-huette.de/
+wikidata: Q1229849
+wikipedia: de:Kemptner Hütte</cmt>
+    <desc>building: yes
+capacity:overnight: 285
+capacity:winter_room: 26
+cuisine: regional
+diet:vegetarian: yes
+ele: 1846
+internet_access: no
+name: Kemptner Hütte
+operator: DAV Sektion Allgäu-Kempten
+operator:tenant: Gabriele Braxmair
+payment:cash: yes
+payment:credit_cards: no
+payment:girocard: no
+phone: +49 8322 700152
+ref:avf: 290
+shower: yes
+smoking: no
+staff: season
+tourism: alpine_hut
+website: https://www.kemptner-huette.de/
+wikidata: Q1229849
+wikipedia: de:Kemptner Hütte</desc>
+    <sym>Lodge</sym>
+  </wpt>
+  <wpt lat="47.347196" lon="10.305059">
+    <ele>995.2664188832981</ele>
+    <name>Start</name>
+    <sym>Information</sym>
+  </wpt>
+  <wpt lat="47.254124" lon="10.329674">
+    <ele>1105.0811912158413</ele>
+    <name>Haus_Elsa</name>
+    <sym>Lodging</sym>
+  </wpt>
+  <wpt lat="47.168333" lon="10.4032244">
+    <ele>2370.5984425334163</ele>
+    <name>Ansbacher Hütte</name>
+    <cmt>contact:email: ansbacherhuette@gmail.com
+contact:phone: +43 676 8429 27 136
+contact:website: https://www.ansbacherhuette.at/
+ele: 2376
+name: Ansbacher Hütte
+operator: DAV Sektion Ansbach
+tourism: alpine_hut
+wikidata: Q569046
+wikipedia: de:Ansbacher Hütte</cmt>
+    <desc>contact:email: ansbacherhuette@gmail.com
+contact:phone: +43 676 8429 27 136
+contact:website: https://www.ansbacherhuette.at/
+ele: 2376
+name: Ansbacher Hütte
+operator: DAV Sektion Ansbach
+tourism: alpine_hut
+wikidata: Q569046
+wikipedia: de:Ansbacher Hütte</desc>
+    <sym>Lodge</sym>
+  </wpt>
+  <wpt lat="47.152147" lon="10.379873">
+    <ele>1183.4531017860404</ele>
+    <name>Linie 4242</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="47.164069" lon="10.730882">
+    <ele>982.9006642172121</ele>
+    <name>MPreis</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="47.172993" lon="10.72319">
+    <ele>1205.0793730464309</ele>
+    <name>Auszeithaus</name>
+    <sym>Lodging</sym>
+  </wpt>
+  <wpt lat="47.206004" lon="10.759909">
+    <ele>885.3125509316004</ele>
+    <name>Pfarrkirche Arzl Im Pitztal</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="46.958325" lon="10.876432">
+    <ele>1729.7079340622574</ele>
+    <name>Taxi Stopp</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="46.9352121" lon="10.9091576">
+    <ele>2753.008584412505</ele>
+    <name>Braunschweiger Hütte</name>
+    <cmt>addr:city: St. Leonhard im Pitztal
+addr:country: AT
+addr:housename: Braunschweiger Hütte
+addr:housenumber: 30
+addr:postcode: 6481
+addr:street: Mittelberg
+building: yes
+diet:vegan: yes
+diet:vegetarian: yes
+ele: 2759
+email: office@braunschweiger-huette.at
+name: Braunschweiger Hütte
+operator: DAV Sektion Braunschweig
+phone: +436642012013
+tourism: alpine_hut
+website: https://braunschweiger-huette.at/
+wikidata: Q901903
+wikipedia: de:Braunschweiger Hütte</cmt>
+    <desc>addr:city: St. Leonhard im Pitztal
+addr:country: AT
+addr:housename: Braunschweiger Hütte
+addr:housenumber: 30
+addr:postcode: 6481
+addr:street: Mittelberg
+building: yes
+diet:vegan: yes
+diet:vegetarian: yes
+ele: 2759
+email: office@braunschweiger-huette.at
+name: Braunschweiger Hütte
+operator: DAV Sektion Braunschweig
+phone: +436642012013
+tourism: alpine_hut
+website: https://braunschweiger-huette.at/
+wikidata: Q901903
+wikipedia: de:Braunschweiger Hütte</desc>
+    <sym>Lodge</sym>
+  </wpt>
+  <wpt lat="47.259377" lon="10.343095">
+    <ele>1101.5540397488144</ele>
+    <name>Essen Mittag + Morgen</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="47.259646" lon="10.34388">
+    <ele>1102.8056995209263</ele>
+    <name>Taxi Feuerstein</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="46.923323" lon="10.945408">
+    <ele>2790.9714618773314</ele>
+    <name>Sölden Bus Haltestelle</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="46.740212" lon="10.846137">
+    <ele>1805.1600681886791</ele>
+    <name>Tisenhof</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <wpt lat="46.669839" lon="11.153197">
+    <ele>309.03239953615747</ele>
+    <name>Jugendherberge Meran</name>
+    <sym>Lodging</sym>
+  </wpt>
+  <wpt lat="47.4112728" lon="10.27825">
+    <ele>805.5257175035213</ele>
+    <name>Oberstdorf</name>
+    <cmt>name: Oberstdorf
+operator: DB Netz AG
+public_transport: station
+railway: station
+railway:ref: MOF
+railway:station_category: 3
+ref:IFOPT: de:09780:700
+toilets:wheelchair: yes
+uic_ref: 8004585
+wheelchair: yes
+wikidata: Q2657949
+wikipedia: de:Bahnhof Oberstdorf</cmt>
+    <desc>name: Oberstdorf
+operator: DB Netz AG
+public_transport: station
+railway: station
+railway:ref: MOF
+railway:station_category: 3
+ref:IFOPT: de:09780:700
+toilets:wheelchair: yes
+uic_ref: 8004585
+wheelchair: yes
+wikidata: Q2657949
+wikipedia: de:Bahnhof Oberstdorf</desc>
+    <sym>Ground Transportation</sym>
+  </wpt>
+  <wpt lat="47.4085588" lon="10.2527154">
+    <ele>897.2614498552475</ele>
+    <name>Oberstdorf Reute</name>
+    <cmt>bench: yes
+bin: no
+bus: yes
+highway: bus_stop
+kerb: raised
+kerb:height: 0.06
+lit: no
+name: Oberstdorf Reute
+platform:width: 2.75
+public_transport: platform
+ref:IFOPT: de:09780:723:0:6
+shelter: yes
+tactile_paving: no
+wheelchair: limited</cmt>
+    <desc>bench: yes
+bin: no
+bus: yes
+highway: bus_stop
+kerb: raised
+kerb:height: 0.06
+lit: no
+name: Oberstdorf Reute
+platform:width: 2.75
+public_transport: platform
+ref:IFOPT: de:09780:723:0:6
+shelter: yes
+tactile_paving: no
+wheelchair: limited</desc>
+    <sym>Ground Transportation</sym>
+  </wpt>
+  <wpt lat="47.408446" lon="10.252568">
+    <ele>896.2861827786172</ele>
+    <name>RVA: Linie 9763 Bergsteigerlinie nach Spielmannsau</name>
+    <sym>Ground Transportation</sym>
+  </wpt>
+  <wpt lat="47.40683" lon="10.248031">
+    <ele>898.1033962087248</ele>
+    <name>Jugendherberge Oberstorf</name>
+    <sym>Lodging</sym>
+  </wpt>
+  <wpt lat="47.235278" lon="10.444218">
+    <ele>1261.1891280008017</ele>
+    <name>Taxi Feuerstein Haltestelle</name>
+    <sym>Anchor</sym>
+  </wpt>
+  <trk>
+    <name>Alpenüberquerung2</name>
+    <extensions>
+      <gpx_style:line>
+        <color>400040</color>
+        <opacity>1</opacity>
+        <weight>10</weight>
+      </gpx_style:line>
+    </extensions>
+    <trkseg>
+      <trkpt lat="47.16408139125613" lon="10.730508315235882">
+        <ele>991.5285247114717</ele>
+        <time>2024-11-17T21:37:18.549Z</time>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>secondary</highway>
+              <surface>asphalt</surface>
+              <route_hiking_iwn>yes</route_hiking_iwn>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="47.164043509860406" lon="10.730512373950642">
+        <ele>991.359408583365</ele>
+        <time>2024-11-17T21:37:23.491Z</time>
+        <extensions>
+          <gpxtpx:TrackPointExtension>
+            <gpxtpx:Extensions>
+              <highway>secondary</highway>
+              <surface>asphalt</surface>
+              <route_hiking_iwn>yes</route_hiking_iwn>
+            </gpxtpx:Extensions>
+          </gpxtpx:TrackPointExtension>
+        </extensions>
+      </trkpt>
+      <trkpt lat="47.164043509860406" lon="10.730512373950642">
+        <ele>993.3770422308014</ele>
+        <time>2024-11-17T21:37:23.491Z</time>
+      </trkpt>
+      <trkpt lat="47.163969003476836" lon="10.7309848147882">
+        <ele>980.0565022405657</ele>
+        <time>2024-11-17T21:38:06.391Z</time>
+      </trkpt>
+      <trkpt lat="47.163969003476836" lon="10.7309848147882">
+        <ele>980.0565022405657</ele>
+        <time>2024-11-17T21:38:06.502Z</time>
+      </trkpt>
+      <trkpt lat="47.16402825223253" lon="10.730511677154084">
+        <ele>993.4229012326721</ele>
+        <time>2024-11-17T21:38:49.054Z</time>
+      </trkpt>
+      <trkpt lat="47.16402825223253" lon="10.730511677154084">
+        <ele>993.4229012326721</ele>
+        <time>2024-11-17T21:38:49.054Z</time>
+      </trkpt>
+      <trkpt lat="47.16399151603582" lon="10.730524145985612">
+        <ele>993.1795974481743</ele>
+        <time>2024-11-17T21:38:53.958Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
