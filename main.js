@@ -275,7 +275,8 @@ async function initialize() {
         });
     }
 
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
+    initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
+    //initializeBillboards(map, 'AlpenX/geodata/imgsource/combined-thumbnail', !devAddPictures);
 }
 
 
@@ -526,7 +527,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     myButton.title = "Toggle Route Preview Image Visibility";
 
 
-    const style = document.createElement("style");
+    const style = document.createElement("style"); //why does this relative path work
     style.textContent = `
     .cesium-button::before {
         content: '';
@@ -535,7 +536,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         left: 0;
         right: 0;
         bottom: 0;
-        background-image: url('geodata/objects/figure/eye.png');
+        background-image: url('geodata/objects/figure/eye.png'); 
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
