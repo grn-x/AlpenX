@@ -1,8 +1,109 @@
 // Light Gallery Token: lightGallery: 0000-0000-000-0000 license key is not valid for production use lightgallery.min.js:8:16041
 // Even though non commercial and open source use is permitted without a license key, the warning is still displayed
 
+//TODO:
+// - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
+// - column overlapping masonry layout?
+// - adjust single images manually?
+// - fix cursed polyline ordering
+// - add animated Map Pin
+// - add working figure tracking
+// - refractor and clean up this mess of a code
+
+//----------- Masonry Layout Overview -----------
+async function loadImages() {
+    const response = await fetch('geodata/imgsource/combined_sorted.txt');
+    const text = await response.text();
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+
+    const imageMap = new Map();
+    lines.forEach((line, index) => {
+        const [filename] = line.split(';');
+        if (!imageMap.has(filename)) {
+            imageMap.set(filename, index);
+        }
+    });
 
 
+    const images = [
+        ['20240707_101042000_iOS 2.jpg', 'Tag 0 <br> Bahnhof Bamberg'],
+        ['20240707_191117000_iOS.jpg', 'Tag 0 <br> Jugendherberge Oberstdorf-Kornau'],
+        ['20240708_082738-Benedikt.jpg', 'Tag 1 <br> Start Spielmannsau'],
+        ['20240708_132056-Benedikt.jpg', 'Tag 1 <br> Abstieg nach Holzgau'],
+        ['20240708_195554000_iOS.jpg', 'Tag 1 <br> Hanssens Wasserfall'],
+        ['20240708_145905000_iOS.jpg', 'Tag 1 <br> Holzgau Hängebrücke'],
+        ['20240709_110555-Benedikt.jpg', 'Tag 2 <br> Pfad durch Blumenfeld'],
+        ['20240709_093154610_iOS.jpg', 'Tag 2 <br> Langzeitbelichtung Gletscherbach'],
+        ['20240709_093146000_iOS.jpg', 'Tag 2 <br> Gletscherbachquerung zur Kemptner Hütte'],
+        ['20240709_100734000_iOS.jpg', 'Tag 2 <br> Rast vor Aufstieg zum Flarschjoch'],
+        ['20240709_164623-Benedikt.jpg', 'Tag 2 <br> Freiwilliger Aufstieg zur Samspitze'],
+        ['20240709_183857000_iOS.jpg', 'Tag 2 <br> Abendlicher Ausblick auf Arlbergregion'],
+        ['20240710_191430000_iOS 1.jpg', 'Tag 3 <br> Abstieg nach Schnann'],
+        ['20240710_085919-Benedikt.jpg', 'Tag 3 <br> Abstieg neben Schannerbach'],
+        ['20240710_072631000_iOS.jpg', 'Tag 3 <br> Schnanner Klamm'],
+        ['20240710_130012000_iOS.jpg', 'Tag 3 <br> Aussichtsplattform Adlerhorst im Piztal'],
+        ['20240711_102048-Benedikt.jpg', 'Tag 4 <br> Aufstieg zur Braunschweiger Hütte'],
+        ['20240711_120408-Benedikt.jpg', 'Tag 4 <br> Aufstieg zur Braunschweiger Hütte'],
+        ['20240711_100426000_iOS.jpg', 'Tag 4 <br> Aufstieg zur Braunschweiger Hütte'],
+        ['20240711_121302000_iOS.jpg', 'Tag 4 <br> Gletscherteich hinter Braunschweiger Hütte'],
+        ['20240712_065157-Benedikt.jpg', 'Tag 5 <br> Rückblick auf Braunschweiger Hütte'],
+        ['20240712_071405-Benedikt.jpg', 'Tag 5 <br> Aufstieg zu Pitztaler Jöchl'],
+        ['20240712_072239-Benedikt.jpg', 'Tag 5 <br> Aufstieg zu Pitztaler Jöchl'],
+        ['20240712_105708-Benedikt.jpg', 'Tag 5 <br> Panoramaroute; Ausblick verdeckt durch Regendunst'],
+        ['20240712_112410-Benedikt.jpg', 'Tag 5 <br> Blick auf Herberge in Vent'],
+        ['DSC09874.jpg', 'Tag 6 <br> Rückblick auf Vent'],
+        ['DSC09884.jpg', 'Tag 6 <br> Erste Rast auf Weg nach Meran'],
+        ['DSC09916.jpg', 'Tag 6 <br> Weg nach Meran'],
+        ['DSC09949.jpg', 'Tag 6 <br> Aufstieg zu Similaun Hütte'],
+        ['DSC09973.jpg', 'Tag 6 <br> Ankunft auf der Similaun Hütte'],
+        ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
+    ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
+
+
+    images.sort((a, b) => a[2] - b[2]);
+
+    let stringBuilder;
+    images.forEach(image => {
+        stringBuilder += `['${image[0]}', '${image[1]}'],`;
+    });
+    console.log(stringBuilder);
+
+    const image_path = 'geodata/imgsource/combined/';
+    const row = document.querySelector('.row');
+    const cols = 4;
+    const colsCollection = {};
+
+    for (let i = 1; i <= cols; i++) {
+        colsCollection[`col${i}`] = document.createElement('div');
+        colsCollection[`col${i}`].classList.add('column');
+    }
+
+    for (let i = 0; i < images.length; i++) {
+        const itemContainer = document.createElement('div');
+        itemContainer.classList.add('item');
+        const item = document.createElement('img');
+        item.src = `${image_path}${images[i][0]}`;
+        itemContainer.appendChild(item);
+
+        const hoverText = document.createElement('div');
+        hoverText.classList.add('hover-text');
+        hoverText.innerHTML = images[i][1];
+        itemContainer.appendChild(hoverText);
+
+        itemContainer.addEventListener('click', () => {
+            //console.log('Image Name: ', images[i]);
+            changeSlide(images[i][2]);
+        });
+
+        colsCollection[`col${(i % cols) + 1}`].appendChild(itemContainer);
+    }
+
+    Object.values(colsCollection).forEach(column => {
+        row.appendChild(column);
+    });
+}
+
+loadImages();
 //------------------- Chart.js -------------------
 
 
@@ -275,8 +376,7 @@ async function initialize() {
         });
     }
 
-    initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
-    //initializeBillboards(map, 'AlpenX/geodata/imgsource/combined-thumbnail', !devAddPictures);
+    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
 }
 
 
@@ -527,7 +627,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     myButton.title = "Toggle Route Preview Image Visibility";
 
 
-    const style = document.createElement("style"); //why does this relative path work
+    const style = document.createElement("style");
     style.textContent = `
     .cesium-button::before {
         content: '';
@@ -536,7 +636,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         left: 0;
         right: 0;
         bottom: 0;
-        background-image: url('geodata/objects/figure/eye.png'); 
+        background-image: url('geodata/objects/figure/eye.png');
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
@@ -558,14 +658,14 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 }
 //cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
 const mapButton = document.createElement('button');
-mapButton.textContent = 'Switch to Static Map';
+mapButton.textContent = 'Switch to static Map';
 mapButton.style.position = 'absolute';
 mapButton.style.top = '10px';
 mapButton.style.left = '10px';
 document.body.appendChild(mapButton);
 
 mapButton.addEventListener('click', () => {
-    toggleFallbackContent(mapButton);
+    toggleFallbackContent();
 });
 
 
@@ -1307,7 +1407,7 @@ Cesium.createOsmBuildingsAsync().then(buildingTileset => {
 Chart.register( Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
 
-const gpxData = await getPolyLines(true); //On deployed servers unordered! TODO!
+const gpxData = await getPolyLines(true);
 const nthElement = Math.ceil(gpxData.length / screen.width);
 const data = gpxData
     .filter((_, index) => index % nthElement === 0)
@@ -1439,7 +1539,7 @@ const chart = new Chart(ctx, config);
 
 let isFallbackLoaded = false;
 
-function toggleFallbackContent(buttonElement) {
+function toggleFallbackContent() {
     const cesiumContainer = document.getElementById('cesiumContainer');
 
     if (isFallbackLoaded) {
@@ -1470,9 +1570,7 @@ function toggleFallbackContent(buttonElement) {
         // Show the iframe
         iframe.src = 'StaticMap.html';
         iframe.style.display = 'block';
-        isFallbackLoaded = true
-		buttonElement.textContent = "Switch to Dynamic Map";
-		//TODO: Change Button Name
+        isFallbackLoaded = true;
     }
 }
 /*
