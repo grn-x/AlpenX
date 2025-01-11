@@ -251,19 +251,6 @@ let viewer = new Cesium.Viewer('cesiumContainer', {
 viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 
-const shouldSort = false;
-let map;
-const polylines = [];
-let counter = 0;
-const promises = [];
-// Initial promise to ensure the promises array is not empty and the await call works as expected/doesnt skip the whole forloop
-let initialPromiseResolve;
-const initialPromise = new Promise((resolve) => {
-    initialPromiseResolve = resolve;
-});
-promises.push(initialPromise);
-viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-
 
 const files = new Map([
     ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED, 0]],
