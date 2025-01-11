@@ -190,12 +190,28 @@ animate();*/
         progressBar.style.display = 'none';
       }
     });
-  
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) {
-        switchSrc('./geodata/objects/map/compressed_level14_zoom.glb');
-      } else {
-        switchSrc('./geodata/objects/map/compressed_png_texture.glb'); //Causes redudant get req?
-      }
+
+    checkbox.addEventListener('change', async () => {
+        if (checkbox.checked) {
+            const fileUrl = './geodata/objects/map/compressed_level14_zoom.glb';
+            const exists = await fileExists(fileUrl);
+            if (exists) {
+                switchSrc(fileUrl);
+            } else {
+                alert('Map not yet available');
+            }
+        } else {
+            switchSrc('./geodata/objects/map/compressed_png_texture.glb');
+        }
     });
+
+    async function fileExists(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            console.error('Error checking file existence:', error);
+            return false;
+        }
+    }
   })();

@@ -4,7 +4,7 @@
 //TODO:
 // - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
 // - column overlapping masonry layout?
-// - adjust single images manually?
+// - fix masonry picture ordering manually?
 // - fix cursed polyline ordering
 // - add animated Map Pin
 // - add working figure tracking
@@ -279,7 +279,7 @@ const files = new Map([
 const shouldSort = false;
 let map;
 const polylines = [];
-
+let counter = 0;
 const promises = [];
 // Initial promise to ensure the promises array is not empty and the await call works as expected/doesnt skip the whole forloop
 let initialPromiseResolve;
@@ -304,7 +304,8 @@ files.forEach((value, key) => {
         }
 
 
-        polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now()));
+        //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
+       polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
 
 
    });
@@ -376,7 +377,8 @@ async function initialize() {
         });
     }
 
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
+    //initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures); // fuck you in particular
+    initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
 }
 
 
@@ -658,14 +660,14 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 }
 //cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
 const mapButton = document.createElement('button');
-mapButton.textContent = 'Switch to static Map';
+mapButton.textContent = 'Switch to Static Map';
 mapButton.style.position = 'absolute';
 mapButton.style.top = '10px';
 mapButton.style.left = '10px';
 document.body.appendChild(mapButton);
 
 mapButton.addEventListener('click', () => {
-    toggleFallbackContent();
+    toggleFallbackContent(mapButton);
 });
 
 
@@ -1407,7 +1409,7 @@ Cesium.createOsmBuildingsAsync().then(buildingTileset => {
 Chart.register( Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
 
-const gpxData = await getPolyLines(true);
+const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
 const nthElement = Math.ceil(gpxData.length / screen.width);
 const data = gpxData
     .filter((_, index) => index % nthElement === 0)
@@ -1539,7 +1541,7 @@ const chart = new Chart(ctx, config);
 
 let isFallbackLoaded = false;
 
-function toggleFallbackContent() {
+function toggleFallbackContent(buttonElement) {
     const cesiumContainer = document.getElementById('cesiumContainer');
 
     if (isFallbackLoaded) {
@@ -1571,6 +1573,7 @@ function toggleFallbackContent() {
         iframe.src = 'StaticMap.html';
         iframe.style.display = 'block';
         isFallbackLoaded = true;
+        buttonElement.textContent = 'Switch to Dynamic Map';
     }
 }
 /*
