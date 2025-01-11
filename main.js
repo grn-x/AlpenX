@@ -68,7 +68,7 @@ async function loadImages() {
     });
     console.log(stringBuilder);
 
-    const image_path = 'geodata/imgsource/combined/';
+    const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
     const row = document.querySelector('.row');
     const cols = 4;
     const colsCollection = {};
