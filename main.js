@@ -251,31 +251,6 @@ let viewer = new Cesium.Viewer('cesiumContainer', {
 viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 
-const files = new Map([
-    ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED]],
-    ['geodata/geoJson/Day0-1-WalkToYH.geojson', ['day0', Cesium.Color.CRIMSON]],
-    ['geodata/geoJson/Day1-0-WalkToBus.geojson', ['day1', Cesium.Color.TEAL]],
-    ['geodata/geoJson/Day1-1-BusToStart.geojson', ['day1', Cesium.Color.STEELBLUE]],
-    ['geodata/geoJson/Day1-2-Main.geojson', ['day1', Cesium.Color.TEAL]],
-    ['geodata/geoJson/Day2-0-WalkToBus.geojson', ['day2', Cesium.Color.MEDIUMORCHID]],
-    ['geodata/geoJson/Day2-1-BusToStart.geojson', ['day2', Cesium.Color.MAGENTA]],
-    ['geodata/geoJson/Day2-2-Main.geojson', ['day2', Cesium.Color.MEDIUMORCHID]],
-    ['geodata/geoJson/Day3-0-WalkToBus.geojson', ['day3', Cesium.Color.YELLOW]],
-    ['geodata/geoJson/Day3-1-BusToTrain.geojson', ['day3', Cesium.Color.GOLD]],
-    ['geodata/geoJson/Day3-2-WalkToStore.geojson', ['day3', Cesium.Color.YELLOW]],
-    ['geodata/geoJson/Day3-3-TrainToStart.geojson', ['day3', Cesium.Color.GOLDENROD]],
-    ['geodata/geoJson/Day3-4-Main.geojson', ['day3', Cesium.Color.YELLOW]],
-    ['geodata/geoJson/Day4-0-BusToStore.geojson', ['day4', Cesium.Color.DARKBLUE ]],
-    ['geodata/geoJson/Day4-1-WalkToStore.geojson', ['day4', Cesium.Color.INDIGO ]],
-    ['geodata/geoJson/Day4-2-BusToStart.geojson', ['day4', Cesium.Color.DARKBLUE]],
-    ['geodata/geoJson/Day4-3-Main.geojson', ['day4', Cesium.Color.INDIGO]],
-    ['geodata/geoJson/Day5-0-WalkToBus.geojson', ['day5', Cesium.Color.DARKGREEN]],
-    ['geodata/geoJson/Day5-1-BusToStart.geojson', ['day5', Cesium.Color.DARKOLIVEGREEN]],
-    ['geodata/geoJson/Day5-2-Main.geojson', ['day5', Cesium.Color.DARKGREEN]],
-    ['geodata/geoJson/Day6-0-Main.geojson', ['day6', Cesium.Color.CRIMSON]],
-    ['geodata/geoJson/Day7-0-BusToMerano.geojson', ['day7', Cesium.Color.MAROON]],
-    ['geodata/geoJson/Day7-1-Pizza.geojson', ['day7', Cesium.Color.FIREBRICK]]
-]);
 const shouldSort = false;
 let map;
 const polylines = [];
