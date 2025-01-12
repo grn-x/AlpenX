@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         autoplay: true,
         autoplayControls: true,
-        slideShowInterval : 1000,
+        slideShowInterval : 3000,
         progressBar: true
     });
 
@@ -605,56 +605,74 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 
 
     //putting this into initializeBillboards and not some root function hurts a little, but i need the access to the billboards array
-    //and i dont wanna define it globally since it doesnt need to, and also its kind of okay to put it here idk
+//and i dont wanna define it globally since it doesnt need to, and also its kind of okay to put it here idk
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
-    const myButton = document.createElement("button");
-    myButton.classList.add("cesium-button", "cesium-toolbar-button");
 
-    /*
-        //myButton.style.width = "32px";
-        //myButton.style.height = "32px";
-        //myButton.style.backgroundColor = "transparent";
-        myButton.style.backgroundImage = "url('geodata/objects/figure/eye.png')";
-        myButton.style.backgroundSize = "contain";
-        myButton.style.backgroundRepeat = "no-repeat";
-        myButton.style.border = "black";
-        myButton.style.backgroundPosition = "center";
-        myButton.style.filter = "invert(1)"; //dont want to invert the whole div, just the background image*/
+// Hide Button
+    const hideButton = document.createElement("button");
+    hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button");
+    hideButton.style.position = "relative";
+    hideButton.title = "Toggle Route Preview Image Visibility";
 
-    //myButton.style.width = "32px";
-    //myButton.style.height = "32px";
-    //myButton.style.border = "none";
-    //myButton.style.backgroundColor = "transparent";
-    myButton.style.position = "relative";
-    myButton.title = "Toggle Route Preview Image Visibility";
-
-
-    const style = document.createElement("style");
-    style.textContent = `
-    .cesium-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url('geodata/objects/figure/eye.png');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        filter: invert(1);
-    }
+    const hideButtonStyle = document.createElement("style");
+    hideButtonStyle.textContent = `
+.hide-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('geodata/objects/figure/eye.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: invert(1);
+}
 `;
-    document.head.appendChild(style);
+    document.head.appendChild(hideButtonStyle);
 
-    myButton.addEventListener("click", () => {
+    hideButton.addEventListener("click", () => {
         billboards.forEach(entity => {
             entity.show = !entity.show;
         });
     });
 
-    toolbar.insertBefore(myButton, modeButton);
+// Track Button
+    const trackButton = document.createElement("button");
+    trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button");
+    trackButton.style.position = "relative";
+    trackButton.title = "Track the figure, when it moves after a picture change, or a height profile selection";
+
+    const trackButtonStyle = document.createElement("style");
+    trackButtonStyle.textContent = `
+.track-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('geodata/objects/figure/map-pin.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: invert(1);
+}
+`;
+    document.head.appendChild(trackButtonStyle);
+
+    trackButton.addEventListener("click", () => {
+        if (viewer.trackedEntity === mapPin) {
+            viewer.trackedEntity = null;
+        } else {
+            viewer.trackedEntity = mapPin;
+        }
+    });
+
+    toolbar.insertBefore(trackButton, modeButton);
+    toolbar.insertBefore(hideButton, modeButton);
 
 // Zoom to the latest added entity
 //viewer.zoomTo(viewer.entities); //TODO: uncomment because working
