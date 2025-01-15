@@ -5,8 +5,6 @@
 // - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
-// - add animated Map Pin
-// - add working figure tracking and animate movement
 // - refractor and clean up this mess of a code
 // - images to fix:
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
