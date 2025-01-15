@@ -609,6 +609,26 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
+    const hoverEffectStyle = document.createElement("style");
+    hoverEffectStyle.textContent = `
+.temp-hover {
+    color: #fff !important;
+    fill: #fff !important;
+    background: #48b !important;
+    border-color: #aef !important;
+    box-shadow: 0 0 8px #fff !important;
+}
+`;
+    document.head.appendChild(hoverEffectStyle);
+
+// Function to trigger hover effect
+    function triggerHoverEffect(button) {
+        button.classList.add('temp-hover');
+        setTimeout(() => {
+            button.classList.remove('temp-hover');
+        }, 1000); // Adjust the duration as needed
+    }
+
 // Hide Button
     const hideButton = document.createElement("button");
     hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button");
@@ -668,12 +688,18 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
             viewer.trackedEntity = null;
         } else {
             viewer.trackedEntity = mapPin;
+
+            triggerHoverEffect(hideButton);
+            triggerHoverEffect(trackButton);
+
         }
     });
 
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
 
+
+// Example usage: trigger hover effect on both buttons
 // Zoom to the latest added entity
 //viewer.zoomTo(viewer.entities); //TODO: uncomment because working
 }
@@ -1082,8 +1108,55 @@ function moveCesiumFigure(index) {
     } else {
         console.warn('Index out of bounds:', index);
     }
+    console.log('Is visible:', isEntityInView(mapPin.position.getValue(Cesium.JulianDate.now())));
 
 }
+function isPositionInView(position) {
+
+    const globeBoundingSphere = new Cesium.BoundingSphere(
+        Cesium.Cartesian3.ZERO,
+        viewer.scene.globe.ellipsoid.minimumRadius
+    );
+    const occluder = new Cesium.Occluder(
+        globeBoundingSphere,
+        viewer.camera.position
+    );
+
+    return occluder.isPointVisible(position);
+}
+
+function isEntityInRect(entity) {
+    const position = entity.position.getValue(Cesium.JulianDate.now());
+    const cartographic = Cesium.Cartographic.fromCartesian(position);
+    const viewRectangle = viewer.camera.computeViewRectangle();
+
+    return Cesium.Rectangle.contains(viewRectangle, cartographic);
+
+}
+
+function isEntityInView(entity) {
+    const camera = viewer.camera;
+    const frustum = camera.frustum;
+    const cullingVolume = frustum.computeCullingVolume(
+        camera.position,
+        camera.direction,
+        camera.up
+    );
+
+    // Bounding sphere of the entity.
+    let boundingSphere = new Cesium.BoundingSphere();
+    viewer.dataSourceDisplay.getBoundingSphere(entity, false, boundingSphere);
+
+// Check if the entity is visible in the screen.
+    const intersection = cullingVolume.computeVisibility(boundingSphere);
+
+    console.log(intersection);
+//  1: Cesium.Intersect.INSIDE
+//  0: Cesium.Intersect.INTERSECTING
+// -1: Cesium.Intersect.OUTSIDE
+
+}
+
     /*const entities = dataSource.entities.values;
 
     const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
