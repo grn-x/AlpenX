@@ -15,7 +15,7 @@
 
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
-    const response = await fetch('geodata/imgsource/combined_sorted.txt');
+    const response = await fetch('geodata/imgsource/final_sorted.txt');
     const text = await response.text();
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
 
