@@ -9,6 +9,9 @@
 // - add animated Map Pin
 // - add working figure tracking
 // - refractor and clean up this mess of a code
+// - images to fix:
+//      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
+//      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
 
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
@@ -350,7 +353,8 @@ async function initialize() {
     initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
 }*/
 async function initialize() {
-    const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
+    //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
+    const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
     map = await loadReferenceTables(referenceTablePath);
 
 
