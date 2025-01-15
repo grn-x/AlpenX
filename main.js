@@ -5,9 +5,8 @@
 // - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
-// - fix cursed polyline ordering
 // - add animated Map Pin
-// - add working figure tracking
+// - add working figure tracking and animate movement
 // - refractor and clean up this mess of a code
 // - images to fix:
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
@@ -556,6 +555,7 @@ function getSlideIndexFromKey(key) {
     return match ? parseInt(match[1], 10) : 0;
 }
 */
+let callable;
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
 
@@ -626,11 +626,11 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     document.head.appendChild(hoverEffectStyle);
 
 // Function to trigger hover effect
-    function triggerHoverEffect(button) {
+    function triggerHoverEffect(button, duration = 1000) {
         button.classList.add('temp-hover');
         setTimeout(() => {
             button.classList.remove('temp-hover');
-        }, 1000); // Adjust the duration as needed
+        }, duration); // Adjust the duration as needed
     }
 
 // Hide Button
@@ -698,6 +698,18 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 
         }
     });
+
+    callable = function () {
+        //console.log('callable');
+        callable = function () { //this seems like an absolute terrible solution, but it works kinda
+            console.log('callable');
+            for (let i = 0; i < 5; i++) { //implement css animation instead
+                setTimeout(() => {
+                    triggerHoverEffect(trackButton, 350);
+                }, i * 700); // why do i have to do it this way?
+            }
+        }
+    }
 
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
@@ -1113,6 +1125,10 @@ function moveCesiumFigure(index) {
         console.warn('Index out of bounds:', index);
     }
     console.log('Is visible:', isEntityInView(mapPin.position.getValue(Cesium.JulianDate.now())));
+
+    if(!isEntityInView(mapPin)) {
+        callable();
+    }
 
 }
 function isPositionInView(position) {
