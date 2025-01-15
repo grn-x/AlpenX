@@ -324,10 +324,10 @@ initialize();
 
 async function getPolyLines(flat = true) {
     const start = performance.now();
-    console.log('Getting polylines: ' + polylines);
+    //console.log('Getting polylines: ' + polylines);
     await Promise.all(promises);
     const end = performance.now();
-    console.log('Polylines: ' + polylines);
+    //console.log('Polylines: ' + polylines);
 
     const duration = (end - start)
     console.log(`Await call took: ${duration} millis`);
@@ -613,7 +613,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
-    const hoverEffectStyle = document.createElement("style");
+   /* const hoverEffectStyle = document.createElement("style");
     hoverEffectStyle.textContent = `
 .temp-hover {
     color: #fff !important;
@@ -623,7 +623,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     box-shadow: 0 0 8px #fff !important;
 }
 `;
-    document.head.appendChild(hoverEffectStyle);
+    document.head.appendChild(hoverEffectStyle); */
 
 // Function to trigger hover effect
     function triggerHoverEffect(button, duration = 1000) {
@@ -658,9 +658,21 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     document.head.appendChild(hideButtonStyle);
 
     hideButton.addEventListener("click", () => {
-        billboards.forEach(entity => {
+        if(hideButton.classList.contains('hidden')){
+            hideButton.classList.remove('hidden');
+            billboards.forEach(entity => {
+                entity.show = true;
+            });
+
+        }else{
+            hideButton.classList.add('hidden');
+            billboards.forEach(entity => {
+                entity.show = false;
+            });
+        }
+        /*billboards.forEach(entity => {
             entity.show = !entity.show;
-        });
+        });*/
     });
 
 // Track Button
@@ -690,11 +702,14 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
             viewer.trackedEntity = null;
+            trackButton.classList.remove('tracked');
+
         } else {
             viewer.trackedEntity = mapPin;
+            trackButton.classList.add('tracked');
 
-            triggerHoverEffect(hideButton);
-            triggerHoverEffect(trackButton);
+            //triggerHoverEffect(hideButton);
+            //triggerHoverEffect(trackButton);
 
         }
     });
@@ -1124,9 +1139,9 @@ function moveCesiumFigure(index) {
     } else {
         console.warn('Index out of bounds:', index);
     }
-    console.log('Is visible:', isEntityInView(mapPin.position.getValue(Cesium.JulianDate.now())));
+    console.log('Is visible:', isEntityInRect(mapPin));
 
-    if(!isEntityInView(mapPin)) {
+    if(!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
         callable();
     }
 

@@ -136,3 +136,20 @@ border-radius: 12px;
 .item:hover .hover-text {
 opacity: 1;
 }
+
+.hidden {
+    outline: 2px solid red;
+    box-shadow: 0 0 10px red;
+}
+.tracked {
+    outline: 2px solid yellowgreen;
+    box-shadow: 0 0 10px yellowgreen;
+}
+/*from the cesium widget css*/
+.temp-hover {
+    color: #fff !important;
+    fill: #fff !important;
+    background: #48b !important;
+    border-color: #aef !important;
+    box-shadow: 0 0 8px #fff !important;
+}
