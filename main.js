@@ -1107,13 +1107,31 @@ function initializePin(viewer, initialPosition) {
         return Cesium.Transforms.headingPitchRollQuaternion(initialPosition, new Cesium.HeadingPitchRoll(heading, 0, 0), result);
     }, false);*/
 
-    const mapPin = viewer.entities.add({
+
+
+
+
+
+    /*const mapPin = viewer.entities.add({
         position: initialPosition, //positionProperty,
         //orientation: orientationProperty,
         model: {
             uri: 'geodata/objects/figure/map-pin.glb',
             scale: 1000,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+        }
+    });*/
+
+    const mapPin = viewer.entities.add({
+        position: initialPosition,
+        model: {
+            uri: 'geodata/objects/figure/floating-map-pin.glb',
+            scale: 1000,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            runAnimations: true, // Enable animations
+            animations: {
+                loop: Cesium.ModelAnimationLoop.REPEAT // Loop the animation indefinitely
+            }
         }
     });
 
