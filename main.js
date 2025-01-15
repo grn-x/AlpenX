@@ -1134,6 +1134,7 @@ function initializePin(viewer, initialPosition) {
     });
 
     viewer.clock.shouldAnimate = true;
+    viewer.clock.multiplier = 0.5; // slow down animation to hide ugly pause on last animation keyframe
     return mapPin;
 }
 
