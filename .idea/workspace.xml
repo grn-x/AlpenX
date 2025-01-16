@@ -5,9 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="109771cd-fb69-474e-b4f7-65bbabb5508e" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/dist/fonts/lg.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/fonts/lg.ttf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/fonts/lg.woff" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/fonts/lg.woff2" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/fonts/loading.gif" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-autoplay.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-autoplay.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-hash.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-thumbnail.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-thumbnail.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-zoom.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lg-zoom.min.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lightgallery.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/lightgallery.min.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,7 +44,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "gh-pages",
-    "last_opened_file_path": "C:/Users/bened/WebstormProjects/AlpenX/geodata/imgsource",
+    "last_opened_file_path": "C:/Users/Benedikt/Development/WebstormAlpenX/Repo/dist/fonts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -42,9 +55,12 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Benedikt\Development\WebstormAlpenX\Repo\dist\fonts" />
+      <recent name="C:\Users\Benedikt\Development\WebstormAlpenX\Repo\dist" />
       <recent name="C:\Users\bened\WebstormProjects\AlpenX\geodata\imgsource" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Benedikt\Development\WebstormAlpenX\Repo\stageForDelete" />
       <recent name="C:\Users\bened\WebstormProjects\AlpenX\geodata\imgsource" />
     </key>
   </component>
