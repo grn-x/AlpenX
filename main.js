@@ -5,8 +5,6 @@
 // - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
-// - add animated Map Pin
-// - add working figure tracking and animate movement
 // - refractor and clean up this mess of a code
 // - images to fix:
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
@@ -1107,7 +1105,12 @@ function initializePin(viewer, initialPosition) {
         return Cesium.Transforms.headingPitchRollQuaternion(initialPosition, new Cesium.HeadingPitchRoll(heading, 0, 0), result);
     }, false);*/
 
-    const mapPin = viewer.entities.add({
+
+
+
+
+
+    /*const mapPin = viewer.entities.add({
         position: initialPosition, //positionProperty,
         //orientation: orientationProperty,
         model: {
@@ -1115,9 +1118,23 @@ function initializePin(viewer, initialPosition) {
             scale: 1000,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
         }
+    });*/
+
+    const mapPin = viewer.entities.add({
+        position: initialPosition,
+        model: {
+            uri: 'geodata/objects/figure/floating-map-pin.glb',
+            scale: 1000,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            runAnimations: true, // Enable animations
+            animations: {
+                loop: Cesium.ModelAnimationLoop.REPEAT // Loop the animation indefinitely
+            }
+        }
     });
 
     viewer.clock.shouldAnimate = true;
+    viewer.clock.multiplier = 0.5; // slow down animation to hide ugly pause on last animation keyframe
     return mapPin;
 }
 
