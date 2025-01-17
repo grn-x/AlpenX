@@ -10,6 +10,9 @@
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
 
+
+
+
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
     const response = await fetch('geodata/imgsource/final_sorted.txt');
@@ -23,6 +26,7 @@ async function loadImages() {
             imageMap.set(filename, index);
         }
     });
+
 
 
     const images = [
@@ -59,14 +63,13 @@ async function loadImages() {
         ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
     ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
 
-
     images.sort((a, b) => a[2] - b[2]);
 
-    let stringBuilder;
+    /*let stringBuilder;
     images.forEach(image => {
         stringBuilder += `['${image[0]}', '${image[1]}'],`;
     });
-    console.log(stringBuilder);
+    console.log(stringBuilder);*/
 
     const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
     const row = document.querySelector('.row');
@@ -158,7 +161,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });*/
 
 let gallery_instance;
+
+let loadDivsPromiseResolve;
+
+const loadDivsPromise = new Promise((resolve) => {
+    loadDivsPromiseResolve = resolve;
+});
+
+
+
+let innterHTMLcontent;
+function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
+    const elementString = `
+        <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
+        <img src="${thumbnailPath}/thumbnail_${filename}" alt="${altText}" loading="lazy" data-src="${imagePath}/${filename}" class="lg-lazy-thumb" />
+        </a>
+        `;
+
+    innterHTMLcontent += elementString;
+}
+
+
+async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
+    const addElement = () => {
+        galleryHTMLelement.innerHTML = innterHTMLcontent;
+        loadDivsPromiseResolve(); // Resolve the promise when loadHTMLdivs is completed
+
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addElement);
+    } else {
+        addElement();
+
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
+    loadDivsPromise.then(() => {
 
     const gallery = document.getElementById('lightgallery');
 
@@ -190,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     gallery.addEventListener('lgContainerResize', (event) => {
-        console.log('Maximized, changing to index 2 now');
         //changeSlide(1);
 
         //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
@@ -198,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     gallery.addEventListener('lgAfterSlide', (event) => {
         const { index, prevIndex } = event.detail;
-        console.log('Picture opened at index:', index);
 
        /* //const location = event.detail.instance.getSlideItem(event.detail.index).getAttribute('data-location');
         console.log('Picture location:', location);
@@ -211,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
 
+    });
     });
 
 });
@@ -473,18 +513,23 @@ function loadReferenceTables(referenceTablePath) {
     return fetch(referenceTablePath)
         .then(response => response.text())
         .then(text => {
+
             const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
             for (const line of lines) {
                 if(line.startsWith('//')) continue;
-                const [key, valueString] = line.split(';');
+                const [key, valueString, altText] = line.split(';');
                 if (valueString) {
                     const [x, y, z] = valueString.split(' ').map(parseFloat);
                     const value = new Cesium.Cartesian3(x, y, z);
                     map.set(key, value);
+                    constructHTMLdivs(key, valueString, altText );
                 } else {
                     console.warn('Invalid line format:', line);
                 }
             }
+
+            loadHTMLdivs();
+
 
             return map;
         });
@@ -715,7 +760,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     callable = function () {
         //console.log('callable');
         callable = function () { //this seems like an absolute terrible solution, but it works kinda
-            console.log('callable');
+           // console.log('callable');
             for (let i = 0; i < 5; i++) { //implement css animation instead
                 setTimeout(() => {
                     triggerHoverEffect(trackButton, 350);
