@@ -5,13 +5,13 @@
 // - fix this this horrible filename that somehow slipped through 20240710_191430000_iOS 1.jpg
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
-// - fix cursed polyline ordering
-// - add animated Map Pin
-// - add working figure tracking
 // - refractor and clean up this mess of a code
 // - images to fix:
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
+
+
+
 
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
@@ -26,6 +26,7 @@ async function loadImages() {
             imageMap.set(filename, index);
         }
     });
+
 
 
     const images = [
@@ -62,14 +63,13 @@ async function loadImages() {
         ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
     ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
 
-
     images.sort((a, b) => a[2] - b[2]);
 
-    let stringBuilder;
+    /*let stringBuilder;
     images.forEach(image => {
         stringBuilder += `['${image[0]}', '${image[1]}'],`;
     });
-    console.log(stringBuilder);
+    console.log(stringBuilder);*/
 
     const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
     const row = document.querySelector('.row');
@@ -161,7 +161,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });*/
 
 let gallery_instance;
+
+let loadDivsPromiseResolve;
+
+const loadDivsPromise = new Promise((resolve) => {
+    loadDivsPromiseResolve = resolve;
+});
+
+
+
+let innterHTMLcontent;
+function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
+    const elementString = `
+        <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
+        <img src="${thumbnailPath}/thumbnail_${filename}" alt="${altText}" loading="lazy" data-src="${imagePath}/${filename}" class="lg-lazy-thumb" />
+        </a>
+        `;
+
+    innterHTMLcontent += elementString;
+}
+
+
+async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
+    const addElement = () => {
+        galleryHTMLelement.innerHTML = innterHTMLcontent;
+        loadDivsPromiseResolve(); // Resolve the promise when loadHTMLdivs is completed
+
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addElement);
+    } else {
+        addElement();
+
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
+    loadDivsPromise.then(() => {
 
     const gallery = document.getElementById('lightgallery');
 
@@ -193,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     gallery.addEventListener('lgContainerResize', (event) => {
-        console.log('Maximized, changing to index 2 now');
         //changeSlide(1);
 
         //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
@@ -201,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     gallery.addEventListener('lgAfterSlide', (event) => {
         const { index, prevIndex } = event.detail;
-        console.log('Picture opened at index:', index);
 
        /* //const location = event.detail.instance.getSlideItem(event.detail.index).getAttribute('data-location');
         console.log('Picture location:', location);
@@ -214,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
 
+    });
     });
 
 });
@@ -325,10 +362,10 @@ initialize();
 
 async function getPolyLines(flat = true) {
     const start = performance.now();
-    console.log('Getting polylines: ' + polylines);
+    //console.log('Getting polylines: ' + polylines);
     await Promise.all(promises);
     const end = performance.now();
-    console.log('Polylines: ' + polylines);
+    //console.log('Polylines: ' + polylines);
 
     const duration = (end - start)
     console.log(`Await call took: ${duration} millis`);
@@ -476,18 +513,23 @@ function loadReferenceTables(referenceTablePath) {
     return fetch(referenceTablePath)
         .then(response => response.text())
         .then(text => {
+
             const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
             for (const line of lines) {
                 if(line.startsWith('//')) continue;
-                const [key, valueString] = line.split(';');
+                const [key, valueString, altText] = line.split(';');
                 if (valueString) {
                     const [x, y, z] = valueString.split(' ').map(parseFloat);
                     const value = new Cesium.Cartesian3(x, y, z);
                     map.set(key, value);
+                    constructHTMLdivs(key, valueString, altText );
                 } else {
                     console.warn('Invalid line format:', line);
                 }
             }
+
+            loadHTMLdivs();
+
 
             return map;
         });
@@ -556,6 +598,7 @@ function getSlideIndexFromKey(key) {
     return match ? parseInt(match[1], 10) : 0;
 }
 */
+let callable;
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
 
@@ -613,6 +656,26 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
+   /* const hoverEffectStyle = document.createElement("style");
+    hoverEffectStyle.textContent = `
+.temp-hover {
+    color: #fff !important;
+    fill: #fff !important;
+    background: #48b !important;
+    border-color: #aef !important;
+    box-shadow: 0 0 8px #fff !important;
+}
+`;
+    document.head.appendChild(hoverEffectStyle); */
+
+// Function to trigger hover effect
+    function triggerHoverEffect(button, duration = 1000) {
+        button.classList.add('temp-hover');
+        setTimeout(() => {
+            button.classList.remove('temp-hover');
+        }, duration); // Adjust the duration as needed
+    }
+
 // Hide Button
     const hideButton = document.createElement("button");
     hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button");
@@ -638,9 +701,21 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     document.head.appendChild(hideButtonStyle);
 
     hideButton.addEventListener("click", () => {
-        billboards.forEach(entity => {
+        if(hideButton.classList.contains('hidden')){
+            hideButton.classList.remove('hidden');
+            billboards.forEach(entity => {
+                entity.show = true;
+            });
+
+        }else{
+            hideButton.classList.add('hidden');
+            billboards.forEach(entity => {
+                entity.show = false;
+            });
+        }
+        /*billboards.forEach(entity => {
             entity.show = !entity.show;
-        });
+        });*/
     });
 
 // Track Button
@@ -670,14 +745,35 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
             viewer.trackedEntity = null;
+            trackButton.classList.remove('tracked');
+
         } else {
             viewer.trackedEntity = mapPin;
+            trackButton.classList.add('tracked');
+
+            //triggerHoverEffect(hideButton);
+            //triggerHoverEffect(trackButton);
+
         }
     });
+
+    callable = function () {
+        //console.log('callable');
+        callable = function () { //this seems like an absolute terrible solution, but it works kinda
+           // console.log('callable');
+            for (let i = 0; i < 5; i++) { //implement css animation instead
+                setTimeout(() => {
+                    triggerHoverEffect(trackButton, 350);
+                }, i * 700); // why do i have to do it this way?
+            }
+        }
+    }
 
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
 
+
+// Example usage: trigger hover effect on both buttons
 // Zoom to the latest added entity
 //viewer.zoomTo(viewer.entities); //TODO: uncomment because working
 }
@@ -1054,7 +1150,12 @@ function initializePin(viewer, initialPosition) {
         return Cesium.Transforms.headingPitchRollQuaternion(initialPosition, new Cesium.HeadingPitchRoll(heading, 0, 0), result);
     }, false);*/
 
-    const mapPin = viewer.entities.add({
+
+
+
+
+
+    /*const mapPin = viewer.entities.add({
         position: initialPosition, //positionProperty,
         //orientation: orientationProperty,
         model: {
@@ -1062,9 +1163,23 @@ function initializePin(viewer, initialPosition) {
             scale: 1000,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
         }
+    });*/
+
+    const mapPin = viewer.entities.add({
+        position: initialPosition,
+        model: {
+            uri: 'geodata/objects/figure/floating-map-pin.glb',
+            scale: 1000,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            runAnimations: true, // Enable animations
+            animations: {
+                loop: Cesium.ModelAnimationLoop.REPEAT // Loop the animation indefinitely
+            }
+        }
     });
 
     viewer.clock.shouldAnimate = true;
+    viewer.clock.multiplier = 0.5; // slow down animation to hide ugly pause on last animation keyframe
     return mapPin;
 }
 
@@ -1086,8 +1201,59 @@ function moveCesiumFigure(index) {
     } else {
         console.warn('Index out of bounds:', index);
     }
+    console.log('Is visible:', isEntityInRect(mapPin));
+
+    if(!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
+        callable();
+    }
 
 }
+function isPositionInView(position) {
+
+    const globeBoundingSphere = new Cesium.BoundingSphere(
+        Cesium.Cartesian3.ZERO,
+        viewer.scene.globe.ellipsoid.minimumRadius
+    );
+    const occluder = new Cesium.Occluder(
+        globeBoundingSphere,
+        viewer.camera.position
+    );
+
+    return occluder.isPointVisible(position);
+}
+
+function isEntityInRect(entity) {
+    const position = entity.position.getValue(Cesium.JulianDate.now());
+    const cartographic = Cesium.Cartographic.fromCartesian(position);
+    const viewRectangle = viewer.camera.computeViewRectangle();
+
+    return Cesium.Rectangle.contains(viewRectangle, cartographic);
+
+}
+
+function isEntityInView(entity) {
+    const camera = viewer.camera;
+    const frustum = camera.frustum;
+    const cullingVolume = frustum.computeCullingVolume(
+        camera.position,
+        camera.direction,
+        camera.up
+    );
+
+    // Bounding sphere of the entity.
+    let boundingSphere = new Cesium.BoundingSphere();
+    viewer.dataSourceDisplay.getBoundingSphere(entity, false, boundingSphere);
+
+// Check if the entity is visible in the screen.
+    const intersection = cullingVolume.computeVisibility(boundingSphere);
+
+    console.log(intersection);
+//  1: Cesium.Intersect.INSIDE
+//  0: Cesium.Intersect.INTERSECTING
+// -1: Cesium.Intersect.OUTSIDE
+
+}
+
     /*const entities = dataSource.entities.values;
 
     const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
