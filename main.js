@@ -170,7 +170,7 @@ const loadDivsPromise = new Promise((resolve) => {
 
 
 
-let innterHTMLcontent;
+let innterHTMLcontent = ''; //else this creates an undefined element in the document
 function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
     const elementString = `
         <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
