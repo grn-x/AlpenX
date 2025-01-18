@@ -815,7 +815,7 @@ function initializePlane(map){
     viewer.zoomTo(viewer.entities);
 }
 
-const devAddPictures = false;
+const devAddPictures = true;
 if(devAddPictures) {
 
     viewer.screenSpaceEventHandler.setInputAction(function(click) {
