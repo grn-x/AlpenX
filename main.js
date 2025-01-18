@@ -839,7 +839,8 @@ if(devAddPictures) {
                         },
                         clampToGround: true
                     });
-                    writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
+                    //writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
+                    writeToClipboard(`${intersect.x} ${intersect.y} ${intersect.z}`);
                     setTimeout(() => {
                         viewer.entities.remove(redCone);
                     }, 2000);
