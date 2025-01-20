@@ -65,11 +65,6 @@ async function loadImages() {
 
     images.sort((a, b) => a[2] - b[2]);
 
-    /*let stringBuilder;
-    images.forEach(image => {
-        stringBuilder += `['${image[0]}', '${image[1]}'],`;
-    });
-    console.log(stringBuilder);*/
 
     const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
     const row = document.querySelector('.row');
@@ -111,54 +106,6 @@ loadImages();
 
 
 //-------------------- LightGallery --------------------
-/*let gallery_instance;
-document.addEventListener('DOMContentLoaded', function() {
-
-    const gallery = document.getElementById('lightgallery');
-
-    gallery_instance = lightGallery(gallery, {
-        container: document.getElementById('galleryContainer'),
-        download: false,
-        controls: true,
-        mousewheel: true,
-        preload: 2,
-        resetScrollPosition: false,
-        showMaximizeIcon: true,
-        plugins: [lgZoom, lgThumbnail, lgAutoplay],
-        thumbnail: true,
-        zoom: true,
-        zoomPluginStrings: {
-            zoomIn: 'Zoom in',
-            zoomOut: 'Zoom out',
-            actualSize: 'Actual size'
-        },
-        zoom: {
-            scale: 1.5,
-            zoomFromOrigin: true // Does not seem to work //rtfm
-
-        },
-        autoplay: true,
-        autoplayControls: true,
-        slideShowInterval : 1000,
-        progressBar: true
-    });
-
-    gallery.addEventListener('lgContainerResize', (event) => {
-        console.log('Maximized, changing to index 2 now');
-        changeSlide(1);
-
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-    });
-
-    gallery.addEventListener('lgAfterSlide', (event) => {
-        const { index, prevIndex } = event.detail;
-        console.log('Picture opened at index:', index);
-
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-
-    });
-
-});*/
 
 let gallery_instance;
 
@@ -239,14 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
     gallery.addEventListener('lgAfterSlide', (event) => {
         const { index, prevIndex } = event.detail;
 
-       /* //const location = event.detail.instance.getSlideItem(event.detail.index).getAttribute('data-location');
-        console.log('Picture location:', location);
-
-        const slideItem = gallery_instance.getSlideItem(index);
-        console.log('Attributes of the current slide element:', slideItem);
-        for (let attr of slideItem.attributes) {
-            console.log(`item: ${attr.name}: ${attr.value}`);
-        }*/
 
         moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
 
@@ -379,16 +318,7 @@ async function getPolyLines(flat = true) {
 
 
 const referenceTablePaths = ['geodata\\imgsource\\lookupTable.txt', 'geodata/imgsource/lookupTable-Toni.txt'];
-/*const map = loadReferenceTables(referenceTablePaths).then(map => {
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', false);
-});*/
 
-/*
-async function initialize() {
-    const referenceTablePaths = ['geodata\\imgsource\\lookupTable.txt', 'geodata/imgsource/lookupTable-Toni.txt'];
-    map = await loadReferenceTables(referenceTablePaths);
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
-}*/
 async function initialize() {
     //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
     const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
@@ -534,70 +464,7 @@ function loadReferenceTables(referenceTablePath) {
             return map;
         });
 }
-/*
-function initializeBillboards(map, prePath = '/geodata/imgsource/benedikt-thumbnail') {
-    const billboards = [];
 
-    map.forEach((value, key) => {
-        if (value.x && value.y && value.z) {
-            const entity = viewer.entities.add({
-                position: value,
-                billboard: {
-                    image: `${prePath}/thumbnail_${key}`,
-                    width: 50,
-                    height: 50,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                    disableDepthTestDistance: Number.POSITIVE_INFINITY //avoid clipping
-                },
-                clampToGround: true
-            });
-
-            billboards.push(entity);
-
-            entity.billboard.id = key; // :/
-            viewer.screenSpaceEventHandler.setInputAction(function(click) {
-                const pickedObject = viewer.scene.pick(click.position);
-                if (Cesium.defined(pickedObject) && pickedObject.id === entity) {
-                    const slideIndex = getSlideIndexFromKey(key); // Function to get slide index from key
-                    changeSlide(slideIndex);
-                }
-            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-        } else {
-            console.warn('No valid cartesian coordinates found for key:', key);
-        }
-    });
-
-    viewer.scene.preRender.addEventListener(() => {
-        const cameraPosition = viewer.camera.position;
-        billboards.forEach(entity => {
-            const distance = Cesium.Cartesian3.distance(cameraPosition, entity.position.getValue(Cesium.JulianDate.now()));
-            const scale = Math.max(0.1, 1 / (distance / 1000)); // Adjust the scale factor as needed
-            entity.billboard.width = 50 * scale;
-            entity.billboard.height = 50 * scale;
-        });
-    });
-
-    const toggleButton = document.createElement('button');
-    toggleButton.textContent = 'Toggle Billboards';
-    toggleButton.style.position = 'absolute';
-    toggleButton.style.top = '10px';
-    toggleButton.style.left = '10px';
-    document.body.appendChild(toggleButton);
-
-    toggleButton.addEventListener('click', () => {
-        billboards.forEach(entity => {
-            entity.show = !entity.show;
-        });
-    });
-
-    viewer.zoomTo(viewer.entities);
-}
-
-function getSlideIndexFromKey(key) {
-    const match = key.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-}
-*/
 let callable;
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
@@ -656,17 +523,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
-   /* const hoverEffectStyle = document.createElement("style");
-    hoverEffectStyle.textContent = `
-.temp-hover {
-    color: #fff !important;
-    fill: #fff !important;
-    background: #48b !important;
-    border-color: #aef !important;
-    box-shadow: 0 0 8px #fff !important;
-}
-`;
-    document.head.appendChild(hoverEffectStyle); */
 
 // Function to trigger hover effect
     function triggerHoverEffect(button, duration = 1000) {
@@ -941,53 +797,6 @@ function approximateNearestMidpoint(positions, clickPosition) {
 
 
 function visualizeSelection(positions, cartesian) {
-    /* const nearestPoint = nearestPoint1;// Cesium.Cartesian3.midpoint(nearestPoint1, nearestPoint2, new Cesium.Cartesian3());
-               const nearestCartographic = Cesium.Cartographic.fromCartesian(nearestPoint);
-               const nearestLongitude = Cesium.Math.toDegrees(nearestCartographic.longitude);
-               const nearestLatitude = Cesium.Math.toDegrees(nearestCartographic.latitude);
-               console.log(`Clicked long: ${longitude}, lat: ${latitude}, point: ${cartesian}, cartographic: ${cartographic}, \ncolor: ${color}, \nNearest: long: ${nearestLongitude}, lat: ${nearestLatitude}, point: ${nearestPoint}, cartographic: ${nearestCartographic}, \nDistance: ${Cesium.Cartesian3.distance(nearestPoint, cartesian)}`);
-*/
-
-
-
-
-    //nonsense:
-    /*                const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
-            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-            console.log(`Clicked Position: Longitude: ${longitude}, Latitude: ${latitude}`);
-
-            // Get the color of the path
-            const color = pickedObject.id.polyline.material.color.getValue(Cesium.JulianDate.now());
-            console.log(`Path Color: ${color}`);
-
-            // Find the nearest point on the clicked polyline
-            const [nearestPoint1, center, nearestPoint2] = returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian);
-            const [pos1, pos2] = approximateNearestMidpoint([nearestPoint1, center, nearestPoint2], cartesian);
-            const intersect = findNearestPointOnSegments([nearestPoint1, center, nearestPoint2], cartesian);
-            console.log('Nearest points:', nearestPoint1, nearestPoint2,'Real: ', findNearestPoint(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian));
-            if (true){//(nearestPoint1) {
-
-
-
-
-
-
-
-
-
-                //viewer.flyTo(redCone);
-
-                // Remove marker after 2 seconds
-                setTimeout(() => {
-                    viewer.entities.remove(clickedPos);
-                    viewer.entities.remove(redCone);
-                    viewer.entities.remove(blueCone);
-                    viewer.entities.remove(blackCone);
-                }, 2000);
-            }else {
-                console.warn('No nearest point found, clicked: long:', longitude, 'lat:', latitude, 'color:', color);
-            }*/
 
 
 
@@ -1091,80 +900,10 @@ function findNearestPointOnSegments(points, point) {
         return nearestOnBC;
     }
 }
-/*
-days.forEach((day, index) => {
-
-    Cesium.GeoJsonDataSource.load(getGeoJsonFile(index-1, day), {
-        clampToGround: true,
-        stroke: colors[index],
-        strokeWidth: 10
-    }).then(dataSource => {
-        viewer.dataSources.add(dataSource);
-        if (index === days.length - 1) {
-            //viewer.zoomTo(dataSource);
-        }
-
-
-
-        const entities = dataSource.entities.values;
-
-        const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
-
-
-    if(!backpackEntity) {
-        backpackEntity = viewer.entities.add({
-            position: Cesium.Cartesian3.fromElements(firstPosition.x, firstPosition.y, firstPosition.z),
-            orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-            model: {
-                uri: 'geodata/objects/figure/backpack/backpack.glb',
-                scale: 0.5,
-               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-
-        });
-        viewer.flyTo(backpackEntity);
-    }
-
-
-
-    }).catch(error => {
-        console.error(`Failed to load GeoJSON file indexed: ${index} and from ${day}`, error);
-    });
-});
-*///TODO: uncomment working code!
 
 
 
 function initializePin(viewer, initialPosition) {
-    /*const floatingHeight = 10.0; // Height to float
-    const rotationSpeed = Cesium.Math.toRadians(10); // Rotation speed in radians per second
-
-    const positionProperty = new Cesium.CallbackProperty((time, result) => {
-        const elapsedTime = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
-        const height = floatingHeight * Math.sin(elapsedTime);
-        return Cesium.Cartesian3.add(initialPosition, new Cesium.Cartesian3(0, 0, height), result);
-    }, false);
-
-    const orientationProperty = new Cesium.CallbackProperty((time, result) => {
-        const elapsedTime = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
-        const heading = rotationSpeed * elapsedTime;
-        return Cesium.Transforms.headingPitchRollQuaternion(initialPosition, new Cesium.HeadingPitchRoll(heading, 0, 0), result);
-    }, false);*/
-
-
-
-
-
-
-    /*const mapPin = viewer.entities.add({
-        position: initialPosition, //positionProperty,
-        //orientation: orientationProperty,
-        model: {
-            uri: 'geodata/objects/figure/map-pin.glb',
-            scale: 1000,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-        }
-    });*/
 
     const mapPin = viewer.entities.add({
         position: initialPosition,
@@ -1254,53 +993,6 @@ function isEntityInView(entity) {
 // -1: Cesium.Intersect.OUTSIDE
 
 }
-
-    /*const entities = dataSource.entities.values;
-
-    const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
-
-
-    if(!backpackEntity) {
-        backpackEntity = viewer.entities.add({
-            position: Cesium.Cartesian3.fromElements(firstPosition.x, firstPosition.y, firstPosition.z),
-            orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-            model: {
-                uri: 'geodata/objects/figure/backpack/backpack.glb',
-                scale: 0.5,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-
-        });
-        viewer.flyTo(backpackEntity);
-    }
-
-/*
-initializePin(viewer, mapPin.position.getValue(Cesium.JulianDate.now()));
-mapPin = viewer.entities.add({
-                    position: Cesium.Cartesian3.fromElements(dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].x, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].y, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].z),
-                    //orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-                    model: {
-                        uri: 'geodata/objects/figure/map-pin.glb',
-                        scale: 1000,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                    }
-
-                });
-
-
-let redBox = viewer.entities.add({
-    name: "Red box with black outline",
-    position: Cesium.Cartesian3.fromDegrees(0, 0, 0), // Initial position
-    box: {
-        dimensions: new Cesium.Cartesian3(40.0, 30.0, 60.0),
-        material: Cesium.Color.RED.withAlpha(0.5),
-        outline: true,
-        outlineColor: Cesium.Color.BLACK,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-    }
-});
-
-*/
 
 
 //testing block end. uncomment working code above!
@@ -1506,89 +1198,6 @@ window.onload = () => {
     //changeBackpackPositionOverTime();
 };
 
-//
-// Cesium.GeoJsonDataSource.load('geodata/tracks.geojson', {
-//     clampToGround: true,
-//     stroke: Cesium.Color.RED,
-//     strokeWidth: 10
-// }).then(dataSource => {
-//     viewer.dataSources.add(dataSource);
-//     viewer.zoomTo(dataSource);
-//
-//     const positions = [];
-//     const elevations = [];
-//     dataSource.entities.values.forEach(entity => {
-//         if (entity.polyline) {
-//             const polylinePositions = entity.polyline.positions.getValue(Cesium.JulianDate.now());
-//             polylinePositions.forEach(position => {
-//                 const cartographic = Cesium.Cartographic.fromCartesian(position);
-//                 positions.push(position);
-//                 elevations.push(cartographic.height);
-//             });
-//         }
-//     });
-//
-//     const positionProperty = new Cesium.SampledPositionProperty();
-//     positions.forEach((position, index) => {
-//         const time = Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), index, new Cesium.JulianDate());
-//         positionProperty.addSample(time, position);
-//     });
-//
-//     const playerEntity = viewer.entities.add({
-//         position: positionProperty,
-//         billboard: {
-//             image: 'favicon.ico', // Path to your player icon image
-//             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-//         },
-//         path: {
-//             resolution: 1,
-//             material: new Cesium.PolylineGlowMaterialProperty({
-//                 glowPower: 0.1,
-//                 color: Cesium.Color.YELLOW,
-//             }),
-//             width: 10,
-//         },
-//     });
-//
-//     viewer.trackedEntity = playerEntity;
-//
-//     const ctx = document.getElementById('heightProfile').getContext('2d');
-//     const chart = new Chart(ctx, {
-//         type: 'line',
-//         data: {
-//             labels: positions.map((_, index) => index),
-//             datasets: [{
-//                 label: 'Elevation',
-//                 data: elevations,
-//                 borderColor: 'rgba(75, 192, 192, 1)',
-//                 borderWidth: 1,
-//                 fill: false
-//             }]
-//         },
-//         options: {
-//             scales: {
-//                 x: {
-//                     type: 'linear',
-//                     position: 'bottom'
-//                 }
-//             }
-//         }
-//     });
-//
-//     document.getElementById('heightProfile').addEventListener('mousemove', (event) => {
-//         const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
-//         if (points.length) {
-//             const pointIndex = points[0].index;
-//             const time = Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), pointIndex, new Cesium.JulianDate());
-//             playerEntity.position.setInterpolationOptions({
-//                 interpolationDegree: 1,
-//                 interpolationAlgorithm: Cesium.LinearApproximation
-//             });
-//             playerEntity.position.addSample(time, positions[pointIndex]);
-//         }
-//     });
-// });
-
 // Add Cesium OSM Buildings, a global 3D buildings layer.
 Cesium.createOsmBuildingsAsync().then(buildingTileset => {
     viewer.scene.primitives.add(buildingTileset);
@@ -1766,70 +1375,3 @@ function toggleFallbackContent(buttonElement) {
         buttonElement.textContent = 'Switch to Dynamic Map';
     }
 }
-/*
-
-//extract every nth element from gpx data array
-const gpxData = await getPolyLines(true);
-const nthElement = Math.ceil(gpxData.length / screen.width);
-const data = gpxData
-    .filter((_, index) => index % 4 === 0)
-    .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
-console.log('Data:', data);
-
-const ctx = document.getElementById("route-elevation-chart").getContext("2d");
-
-
-const chartData = {
-    labels: [0, 21, 44, 68, 88, 109, 125, 134, 139, 156, 164, 172, 187, 208, 263, 441, 472, 591, 664, 707, 785, 823, 900, 941, 1057, 1096, 1135, 1175, 1214], // this is test data
-    datasets: [{
-        data: [2377, 2378, 2379, 2380, 2381, 2382, 2383, 2383, 2383, 2384, 2384, 2384, 2384, 2384, 2388, 2391, 2392, 2393, 2392, 2391, 2394, 2395, 2397, 2397, 2394, 2393, 2394, 2393, 2392], // this is test data
-        fill: true,
-        borderColor: '#66ccff',
-        backgroundColor: '#66ccff66',
-        tension: 0.1,
-        pointRadius: 0,
-        spanGaps: true
-    }]
-};
-
-const config = {
-    type: 'line',
-    data: chartData,
-    plugins: [{
-        beforeInit: (chart, args, options) => {
-            const maxHeight = Math.max(...chart.data.datasets[0].data);
-            chart.options.scales.x.min = Math.min(...chart.data.labels);
-            chart.options.scales.x.max = Math.max(...chart.data.labels);
-            chart.options.scales.y.max = maxHeight + Math.round(maxHeight * 0.2);
-            chart.options.scales.y1.max = maxHeight + Math.round(maxHeight * 0.2);
-        }
-    }],
-    options: {
-        animation: true,
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        tooltip: { position: 'nearest' },
-        scales: {
-            x: { type: 'linear' },
-            y: { type: 'linear', beginAtZero: true },
-            y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }},
-        },
-        plugins: {
-            title: { align: "end", display: true, text: "Distance, m / Elevation, m" },
-            legend: { display: false },
-            tooltip: {
-                displayColors: false,
-                callbacks: {
-                    title: (tooltipItems) => {
-                        return "Distance: " + tooltipItems[0].label + 'm'
-                    },
-                    label: (tooltipItem) => {
-                        return "Elevation: " + tooltipItem.raw + 'm'
-                    },
-                }
-            }
-        }
-    }
-};
-
-const chart = new Chart(ctx, config);*/
