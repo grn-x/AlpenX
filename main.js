@@ -995,44 +995,6 @@ function isEntityInView(entity) {
 }
 
 
-//testing block end. uncomment working code above!
-const backpackEntity = null;
-function updateBackpackPosition(cartesianPosition) {
-    if (backpackEntity) {
-        //viewer.trackedEntity = backpackEntity;
-        backpackEntity.position = cartesianPosition;
-        //viewer.camera.move(backpackEntity);
-        if (document.getElementById('trackEntity').checked) {
-            ensureEntityVisible_camreset(backpackEntity);
-            console.log('Entity is visible');
-        }
-    }
-    changeSlide(1);
-    console.log('Changing slide to 1');
-    //TODO get this work :/
-
-}
-
-
-// sorted by folder, use when pushing to prod
-function getFirstGeoJsonFile(index, day) {
-    const basePath = 'geodata/';
-    const path = `${basePath}${day}/`;
-    const geoJsonFileName =  `gps-data-e5-long-distance-hiking-trail_${index + 1}.geojson`;
-    const fullPath = `${path}${geoJsonFileName}`;
-    return fullPath
-}
-
-//use only for testing, unsorted
-function getGeoJsonFile(index, day) {
-    const basePath = 'geodata/temp/Connected/';
-    //const path = `${basePath}${day}/`;
-    const geoJsonFileName =  `gps-data-e5-long-distance-hiking-trail_${index + 1}.geojson`;
-    const fullPath = `${basePath}${geoJsonFileName}`;
-    return fullPath
-}
-
-
 function ensureEntityVisible_camreset(entity) {
     const position = entity.position.getValue(Cesium.JulianDate.now());
     const cartographic = Cesium.Cartographic.fromCartesian(position);
@@ -1135,40 +1097,9 @@ function raycastOffset(viewer) {
     }
 }
 
-async function changeBackpackPositionOverTime() {
-    const positions = [
-        Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4205, 37.658, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4185, 37.656, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4195, 37.657, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400)
-    ];
-for(let i = 0; i < 20; i++) {
-    for (const position of positions) {
-        updateBackpackPosition(position);
-
-        await new Promise(resolve => setTimeout(resolve, 10000));
-    }
-}
-}
 
 
 
-
-async function updateRedBoxPosition() {
-    return;
-    //await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const { offsetX, offsetY } = raycastOffset(viewer);
-    const absoluteCartesian3 = pickRay(viewer.camera);
-    console.log('Absolute cartesian3: ', absoluteCartesian3);
-    const newPosition = Cesium.Cartesian3.fromElements(
-        viewer.camera.position.x + offsetX,
-        viewer.camera.position.y + offsetY,
-        viewer.camera.position.z
-    );
-    redBox.position = newPosition;
-}
 
 function pickRay(viewer) {
     const scene = viewer.scene;
@@ -1188,6 +1119,12 @@ function pickRay(viewer) {
     }
 }
 
+// Add Cesium OSM Buildings, a global 3D buildings layer.
+Cesium.createOsmBuildingsAsync().then(buildingTileset => {
+    viewer.scene.primitives.add(buildingTileset);
+});
+
+
 viewer.camera.changed.addEventListener(() => {
     //updateRedBoxPosition();
 });
@@ -1198,10 +1135,7 @@ window.onload = () => {
     //changeBackpackPositionOverTime();
 };
 
-// Add Cesium OSM Buildings, a global 3D buildings layer.
-Cesium.createOsmBuildingsAsync().then(buildingTileset => {
-    viewer.scene.primitives.add(buildingTileset);
-});
+
 
 //-------------------Chart.js-------------------
 
