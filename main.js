@@ -23,7 +23,19 @@ const loadDivsPromise = new Promise((resolve) => {
 document.addEventListener('DOMContentLoaded', initializeGallery);
 
 // -- CesiumJS --
+let viewer
+let map
+const polylines = []
+const promises = []
+let initialPromiseResolve
+let mapPin
+let callable
+
+const shouldSort = false
+const devAddPictures = false
 initialize();
+cesiumSetup(devAddPictures)
+
 
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
@@ -212,91 +224,157 @@ function changeSlide(index) {
 
 //-------------------- CesiumJS --------------------
 
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
-let viewer = new Cesium.Viewer('cesiumContainer', {
-    terrain: Cesium.Terrain.fromWorldTerrain(),
-    homeButton: false,
-    sceneModePicker: false,
-    baseLayerPicker: true,
-    navigationHelpButton: false,
-    animation: false,
-    timeline: false,
-    fullscreenButton: false,
-    vrButton: false,
-    geocoder: true,
-    infoBox: false,
-    selectionIndicator: false,
-});
-viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+//defined global variables:
+//let viewer;
+//let mapPin;
+//let polylines;
+//let callable;
+
+//let viewer
+//const shouldSOrt
+//let map
+//const polylines
+//let initialPromiseResolve
+//let mapPin
+//let callable
+
+function cesiumSetup(shouldSort=false) {
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
+    viewer = new Cesium.Viewer('cesiumContainer', {
+        terrain: Cesium.Terrain.fromWorldTerrain(),
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: true,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        vrButton: false,
+        geocoder: true,
+        infoBox: false,
+        selectionIndicator: false,
+    });
+    viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 
-const files = new Map([
-    ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED, 0]],
-    ['geodata/geoJson/Day0-1-WalkToYH.geojson', ['day0', Cesium.Color.CRIMSON, 1]],
-    ['geodata/geoJson/Day1-0-WalkToBus.geojson', ['day1', Cesium.Color.TEAL, 2]],
-    ['geodata/geoJson/Day1-1-BusToStart.geojson', ['day1', Cesium.Color.STEELBLUE, 3]],
-    ['geodata/geoJson/Day1-2-Main.geojson', ['day1', Cesium.Color.TEAL, 4]],
-    ['geodata/geoJson/Day2-0-WalkToBus.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 5]],
-    ['geodata/geoJson/Day2-1-BusToStart.geojson', ['day2', Cesium.Color.MAGENTA, 6]],
-    ['geodata/geoJson/Day2-2-Main.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 7]],
-    ['geodata/geoJson/Day3-0-WalkToBus.geojson', ['day3', Cesium.Color.YELLOW, 8]],
-    ['geodata/geoJson/Day3-1-BusToTrain.geojson', ['day3', Cesium.Color.GOLD, 9]],
-    ['geodata/geoJson/Day3-2-WalkToStore.geojson', ['day3', Cesium.Color.YELLOW, 10]],
-    ['geodata/geoJson/Day3-3-TrainToStart.geojson', ['day3', Cesium.Color.GOLDENROD, 11]],
-    ['geodata/geoJson/Day3-4-Main.geojson', ['day3', Cesium.Color.YELLOW, 12]],
-    ['geodata/geoJson/Day4-0-BusToStore.geojson', ['day4', Cesium.Color.DARKBLUE, 13]],
-    ['geodata/geoJson/Day4-1-WalkToStore.geojson', ['day4', Cesium.Color.INDIGO, 14]],
-    ['geodata/geoJson/Day4-2-BusToStart.geojson', ['day4', Cesium.Color.DARKBLUE, 15]],
-    ['geodata/geoJson/Day4-3-Main.geojson', ['day4', Cesium.Color.INDIGO, 16]],
-    ['geodata/geoJson/Day5-0-WalkToBus.geojson', ['day5', Cesium.Color.DARKGREEN, 17]],
-    ['geodata/geoJson/Day5-1-BusToStart.geojson', ['day5', Cesium.Color.DARKOLIVEGREEN, 18]],
-    ['geodata/geoJson/Day5-2-Main.geojson', ['day5', Cesium.Color.DARKGREEN, 19]],
-    ['geodata/geoJson/Day6-0-Main.geojson', ['day6', Cesium.Color.CRIMSON, 20]],
-    ['geodata/geoJson/Day7-0-BusToMerano.geojson', ['day7', Cesium.Color.MAROON, 21]],
-    ['geodata/geoJson/Day7-1-Pizza.geojson', ['day7', Cesium.Color.FIREBRICK, 22]],
-]);
-const shouldSort = false;
-let map;
-const polylines = [];
-//let counter = 0;
-const promises = [];
+    const files = new Map([
+        ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED, 0]],
+        ['geodata/geoJson/Day0-1-WalkToYH.geojson', ['day0', Cesium.Color.CRIMSON, 1]],
+        ['geodata/geoJson/Day1-0-WalkToBus.geojson', ['day1', Cesium.Color.TEAL, 2]],
+        ['geodata/geoJson/Day1-1-BusToStart.geojson', ['day1', Cesium.Color.STEELBLUE, 3]],
+        ['geodata/geoJson/Day1-2-Main.geojson', ['day1', Cesium.Color.TEAL, 4]],
+        ['geodata/geoJson/Day2-0-WalkToBus.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 5]],
+        ['geodata/geoJson/Day2-1-BusToStart.geojson', ['day2', Cesium.Color.MAGENTA, 6]],
+        ['geodata/geoJson/Day2-2-Main.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 7]],
+        ['geodata/geoJson/Day3-0-WalkToBus.geojson', ['day3', Cesium.Color.YELLOW, 8]],
+        ['geodata/geoJson/Day3-1-BusToTrain.geojson', ['day3', Cesium.Color.GOLD, 9]],
+        ['geodata/geoJson/Day3-2-WalkToStore.geojson', ['day3', Cesium.Color.YELLOW, 10]],
+        ['geodata/geoJson/Day3-3-TrainToStart.geojson', ['day3', Cesium.Color.GOLDENROD, 11]],
+        ['geodata/geoJson/Day3-4-Main.geojson', ['day3', Cesium.Color.YELLOW, 12]],
+        ['geodata/geoJson/Day4-0-BusToStore.geojson', ['day4', Cesium.Color.DARKBLUE, 13]],
+        ['geodata/geoJson/Day4-1-WalkToStore.geojson', ['day4', Cesium.Color.INDIGO, 14]],
+        ['geodata/geoJson/Day4-2-BusToStart.geojson', ['day4', Cesium.Color.DARKBLUE, 15]],
+        ['geodata/geoJson/Day4-3-Main.geojson', ['day4', Cesium.Color.INDIGO, 16]],
+        ['geodata/geoJson/Day5-0-WalkToBus.geojson', ['day5', Cesium.Color.DARKGREEN, 17]],
+        ['geodata/geoJson/Day5-1-BusToStart.geojson', ['day5', Cesium.Color.DARKOLIVEGREEN, 18]],
+        ['geodata/geoJson/Day5-2-Main.geojson', ['day5', Cesium.Color.DARKGREEN, 19]],
+        ['geodata/geoJson/Day6-0-Main.geojson', ['day6', Cesium.Color.CRIMSON, 20]],
+        ['geodata/geoJson/Day7-0-BusToMerano.geojson', ['day7', Cesium.Color.MAROON, 21]],
+        ['geodata/geoJson/Day7-1-Pizza.geojson', ['day7', Cesium.Color.FIREBRICK, 22]],
+    ]);
+
+    //see at top
+    //let map;
+    //let mapPin;
+    //const polylines = [];
+    //const promises = [];
+    //let callable;
+
 // Initial promise to ensure the promises array is not empty and the await call works as expected/doesnt skip the whole forloop
-let initialPromiseResolve;
-const initialPromise = new Promise((resolve) => {
-    initialPromiseResolve = resolve;
-});
-promises.push(initialPromise);
+    //let initialPromiseResolve;
+    const initialPromise = new Promise((resolve) => {
+        initialPromiseResolve = resolve;
+    });
+    promises.push(initialPromise);
 
 
-let mapPin;
-files.forEach((value, key) => {
-    const promise = Cesium.GeoJsonDataSource.load(key, {
-        clampToGround: true,
-        stroke: value[1],
-        strokeWidth: 10
-    }).then(dataSource => {
-        viewer.dataSources.add(dataSource);
-        if (!mapPin) {
-            mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
-            viewer.flyTo(mapPin);
-            //viewer.zoomTo(mapPin);
+    files.forEach((value, key) => {
+        const promise = Cesium.GeoJsonDataSource.load(key, {
+            clampToGround: true,
+            stroke: value[1],
+            strokeWidth: 10
+        }).then(dataSource => {
+            viewer.dataSources.add(dataSource);
+            if (!mapPin) {
+                mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
+                viewer.flyTo(mapPin);
+                //viewer.zoomTo(mapPin);
+            }
+
+
+            //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
+            //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+            polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+
+
+        });
+        promises.push(promise);
+        if (initialPromiseResolve) {
+            initialPromiseResolve();
+            initialPromiseResolve = null;
         }
 
-
-        //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
-        //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
-        polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
-
-
     });
-    promises.push(promise);
-    if (initialPromiseResolve) {
-        initialPromiseResolve();
-        initialPromiseResolve = null;
+
+//cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
+    const mapButton = document.createElement('button');
+    mapButton.textContent = 'Switch to Static Map';
+    mapButton.style.position = 'absolute';
+    mapButton.style.top = '10px';
+    mapButton.style.left = '10px';
+    document.body.appendChild(mapButton);
+
+    mapButton.addEventListener('click', () => {
+        toggleFallbackContent(mapButton);
+    });
+
+    if (devAddPictures) {
+
+        viewer.screenSpaceEventHandler.setInputAction(function (click) {
+            const pickedObject = viewer.scene.pick(click.position);
+            if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polyline) {
+                const cartesian = viewer.scene.pickPosition(click.position);
+                if (Cesium.defined(cartesian)) {
+                    const intersect = findNearestPointOnSegments(returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian), cartesian);
+                    if (intersect && Cesium.defined(intersect) && intersect.x && intersect.y && intersect.z) {
+                        const redCone = viewer.entities.add({
+                            position: intersect,
+                            orientation: Cesium.Transforms.headingPitchRollQuaternion(
+                                intersect,
+                                new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(0), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
+                            ),
+                            cylinder: {
+                                length: 400,
+                                topRadius: 2.0,
+                                bottomRadius: 20.0,
+                                material: Cesium.Color.RED,
+                            },
+                            clampToGround: true
+                        });
+                        //writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
+                        writeToClipboard(`${intersect.x} ${intersect.y} ${intersect.z}`);
+                        setTimeout(() => {
+                            viewer.entities.remove(redCone);
+                        }, 2000);
+                    } else {
+                        console.error('intersect: ', intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
+
+                    }
+                }
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
-
-});
-
+}
 async function getPolyLines(flat = true) {
     const start = performance.now();
     //console.log('Getting polylines: ' + polylines);
@@ -315,7 +393,7 @@ async function getPolyLines(flat = true) {
 }
 
 
-async function initialize() {
+async function initialize(shouldSort = false, devAddPictures = false) {
     //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
     const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
     map = await loadReferenceTables(referenceTablePath);
@@ -344,7 +422,6 @@ async function initialize() {
         });
     }
 
-    //initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures); // fuck you in particular
     initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
 }
 
@@ -424,7 +501,6 @@ function loadReferenceTables(referenceTablePath) {
         });
 }
 
-let callable;
 
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
@@ -484,7 +560,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
 
-// Function to trigger hover effect
+    // Inner Function
     function triggerHoverEffect(button, duration = 1000) {
         button.classList.add('temp-hover');
         setTimeout(() => {
@@ -492,7 +568,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         }, duration); // Adjust the duration as needed
     }
 
-// Hide Button
     const hideButton = document.createElement("button");
     hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button"); // hide-button css element
     // references     'background-image: url('geodata/objects/figure/eye.png');' Beware, still in use
@@ -517,7 +592,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         });*/
     });
 
-// Track Button
     const trackButton = document.createElement("button");
     trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button"); // track-button css element
     // references     'background-image: url('geodata/objects/figure/map-pin.png');' Beware, still in use
@@ -539,9 +613,10 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         }
     });
 
+    // Inner function declaration
     callable = function () {
         //console.log('callable');
-        callable = function () { //this seems like an absolute terrible solution, but it works kinda
+        callable = function () { //this seems like an absolute terrible solution, but it kind of works
             // console.log('callable');
             for (let i = 0; i < 5; i++) { //implement css animation instead
                 setTimeout(() => {
@@ -554,23 +629,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
 
-
-// Example usage: trigger hover effect on both buttons
-// Zoom to the latest added entity
-//viewer.zoomTo(viewer.entities); //TODO: uncomment because working
 }
-
-//cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
-const mapButton = document.createElement('button');
-mapButton.textContent = 'Switch to Static Map';
-mapButton.style.position = 'absolute';
-mapButton.style.top = '10px';
-mapButton.style.left = '10px';
-document.body.appendChild(mapButton);
-
-mapButton.addEventListener('click', () => {
-    toggleFallbackContent(mapButton);
-});
 
 
 function initializePlane(map) {
@@ -595,46 +654,6 @@ function initializePlane(map) {
     });
 //zoom to the latest added entity
     viewer.zoomTo(viewer.entities);
-}
-
-const devAddPictures = false;
-if (devAddPictures) {
-
-    viewer.screenSpaceEventHandler.setInputAction(function (click) {
-        const pickedObject = viewer.scene.pick(click.position);
-        if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polyline) {
-            const cartesian = viewer.scene.pickPosition(click.position);
-            if (Cesium.defined(cartesian)) {
-                const intersect = findNearestPointOnSegments(returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian), cartesian);
-                if (intersect && Cesium.defined(intersect) && intersect.x && intersect.y && intersect.z) {
-                    const redCone = viewer.entities.add({
-                        position: intersect,
-                        orientation: Cesium.Transforms.headingPitchRollQuaternion(
-                            intersect,
-                            new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(0), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
-                        ),
-                        cylinder: {
-                            length: 400,
-                            topRadius: 2.0,
-                            bottomRadius: 20.0,
-                            material: Cesium.Color.RED,
-                        },
-                        clampToGround: true
-                    });
-                    //writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
-                    writeToClipboard(`${intersect.x} ${intersect.y} ${intersect.z}`);
-                    setTimeout(() => {
-                        viewer.entities.remove(redCone);
-                    }, 2000);
-                } else {
-                    console.error('intersect: ', intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
-
-                }
-            }
-        }
-    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-
 }
 
 async function writeToClipboard(text) {
