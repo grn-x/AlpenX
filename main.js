@@ -10,8 +10,19 @@
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
 //      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
 
+//------------------- Entry Point / Main Execution Block -------------------
+loadImages();
 
 
+        // -- LightGallery --
+let gallery_instance;
+let loadDivsPromiseResolve;
+const loadDivsPromise = new Promise((resolve) => {
+    loadDivsPromiseResolve = resolve;
+});
+
+    // -- CesiumJS --
+initialize();
 
 //----------- Masonry Layout Overview -----------
 async function loadImages() {
@@ -101,19 +112,11 @@ async function loadImages() {
     });
 }
 
-loadImages();
 //------------------- Chart.js -------------------
 
 
 //-------------------- LightGallery --------------------
 
-let gallery_instance;
-
-let loadDivsPromiseResolve;
-
-const loadDivsPromise = new Promise((resolve) => {
-    loadDivsPromiseResolve = resolve;
-});
 
 
 
@@ -297,7 +300,6 @@ files.forEach((value, key) => {
     }
 
 });
-initialize();
 
 async function getPolyLines(flat = true) {
     const start = performance.now();
@@ -316,8 +318,6 @@ async function getPolyLines(flat = true) {
     }
 }
 
-
-const referenceTablePaths = ['geodata\\imgsource\\lookupTable.txt', 'geodata/imgsource/lookupTable-Toni.txt'];
 
 async function initialize() {
     //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
@@ -357,13 +357,7 @@ async function initialize() {
 function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(viewer, true)) {
     console.log('Sorting map by keys');
     const sortedMap = new Map();
-/* why the fuck cant i access the viewers polylines
-console.log('CartArray:', viewer.entities.values[1]);
-viewer.entities.values.forEach(entity => {
-    console.log(entity.polyline.positions.getValue(Cesium.JulianDate.now())[0]);// BRUH WHAT THE ACTUAL FUCK HOW ARE YOU EMPTY WHERE DID ALL MY POLYLINES FUCKING GO
-});
-//                mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
-    //map.entries().forEach(([key, value]) => {*/
+
     map.forEach((value,key) => {
         sortedMap.set(key, getNumPreviousPoints(value, cartArray));
     });
@@ -408,35 +402,6 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
 
 
 
-function loadReferenceTables_deprecated(referenceTablePaths) {
-    let map = new Map();
-    const fetchPromises = referenceTablePaths.map(path => fetch(path).then(response => response.text()));
-
-    return Promise.all(fetchPromises)
-        .then(texts => {
-            const regex = /{x:\s*([\d.]+),\s*y:\s*([\d.]+),\s*z:\s*([\d.]+)}/;
-
-            texts.forEach(text => {
-                const lines = text.split('\n'); // example: 20240707_181241-Benedikt.jpg;{x: 4256561.011988274, y: 769295.5877462273, z: 4672850.862949777}
-                for (const line of lines) {
-                    const [key, valueString] = line.split(';');
-                    if (valueString) {
-                        const match = valueString.match(regex);
-                        let value;
-                        if (match) {
-                            value = new Cesium.Cartesian3(parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3]));
-                        } else {
-                            value = new Cesium.Cartesian3(null, null, null);
-                        }
-                        map.set(key, value);
-                    } else {
-                        console.warn('Invalid line format:', line);
-                    }
-                }
-            });
-            return map;
-        });
-}
 
 function loadReferenceTables(referenceTablePath) {
     let map = new Map();
@@ -534,27 +499,10 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 
 // Hide Button
     const hideButton = document.createElement("button");
-    hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button");
+    hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button"); // hide-button css element
+    // references     'background-image: url('geodata/objects/figure/eye.png');' Beware, still in use
     hideButton.style.position = "relative";
     hideButton.title = "Toggle Route Preview Image Visibility";
-
-    const hideButtonStyle = document.createElement("style");
-    hideButtonStyle.textContent = `
-.hide-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('geodata/objects/figure/eye.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: invert(1);
-}
-`;
-    document.head.appendChild(hideButtonStyle);
 
     hideButton.addEventListener("click", () => {
         if(hideButton.classList.contains('hidden')){
@@ -576,27 +524,10 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 
 // Track Button
     const trackButton = document.createElement("button");
-    trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button");
+    trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button"); // track-button css element
+    // references     'background-image: url('geodata/objects/figure/map-pin.png');' Beware, still in use
     trackButton.style.position = "relative";
     trackButton.title = "Track the figure, when it moves after a picture change, or a height profile selection";
-
-    const trackButtonStyle = document.createElement("style");
-    trackButtonStyle.textContent = `
-.track-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('geodata/objects/figure/map-pin.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: invert(1);
-}
-`;
-    document.head.appendChild(trackButtonStyle);
 
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
@@ -1034,6 +965,21 @@ function ensureEntityVisible(entity) {
     }
 }
 
+
+
+async function updateRedBoxPosition() {
+    return;
+    //await new Promise(resolve => setTimeout(resolve, 2000));
+    const { offsetX, offsetY } = raycastOffset(viewer);
+    const absoluteCartesian3 = pickRay(viewer.camera);
+    console.log('Absolute cartesian3: ', absoluteCartesian3);
+    const newPosition = Cesium.Cartesian3.fromElements(
+        viewer.camera.position.x + offsetX,
+        viewer.camera.position.y + offsetY,
+        viewer.camera.position.z
+    );
+    redBox.position = newPosition;
+}
 
 function createCamCenteredBox_deprecated() {
     const { offsetX, offsetY } = calcOffset(viewer.camera);
