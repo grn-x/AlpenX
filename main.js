@@ -14,14 +14,15 @@
 loadImages();
 
 
-        // -- LightGallery --
+// -- LightGallery --
 let gallery_instance;
 let loadDivsPromiseResolve;
 const loadDivsPromise = new Promise((resolve) => {
     loadDivsPromiseResolve = resolve;
 });
+document.addEventListener('DOMContentLoaded', initializeGallery);
 
-    // -- CesiumJS --
+// -- CesiumJS --
 initialize();
 
 //----------- Masonry Layout Overview -----------
@@ -36,11 +37,11 @@ async function loadImages() {
         if (!imageMap.has(filename)) {
             imageMap.set(filename, index);
         }
-    });
+    }); //TODO: refactor this to a seperate function, make loadImages accept map
+    //Looping is done multiple times, combine
 
 
-
-    const images = [
+    const masonry_images = [
         ['20240707_101042000_iOS 2.jpg', 'Tag 0 <br> Bahnhof Bamberg'],
         ['20240707_191117000_iOS.jpg', 'Tag 0 <br> Jugendherberge Oberstdorf-Kornau'],
         ['20240708_082738-Benedikt.jpg', 'Tag 1 <br> Start Spielmannsau'],
@@ -74,7 +75,7 @@ async function loadImages() {
         ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
     ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
 
-    images.sort((a, b) => a[2] - b[2]);
+    masonry_images.sort((a, b) => a[2] - b[2]);
 
 
     const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
@@ -87,21 +88,21 @@ async function loadImages() {
         colsCollection[`col${i}`].classList.add('column');
     }
 
-    for (let i = 0; i < images.length; i++) {
+    for (let i = 0; i < masonry_images.length; i++) {
         const itemContainer = document.createElement('div');
         itemContainer.classList.add('item');
         const item = document.createElement('img');
-        item.src = `${image_path}${images[i][0]}`;
+        item.src = `${image_path}${masonry_images[i][0]}`;
         itemContainer.appendChild(item);
 
         const hoverText = document.createElement('div');
         hoverText.classList.add('hover-text');
-        hoverText.innerHTML = images[i][1];
+        hoverText.innerHTML = masonry_images[i][1];
         itemContainer.appendChild(hoverText);
 
         itemContainer.addEventListener('click', () => {
             //console.log('Image Name: ', images[i]);
-            changeSlide(images[i][2]);
+            changeSlide(masonry_images[i][2]);
         });
 
         colsCollection[`col${(i % cols) + 1}`].appendChild(itemContainer);
@@ -110,14 +111,11 @@ async function loadImages() {
     Object.values(colsCollection).forEach(column => {
         row.appendChild(column);
     });
-}
 
-//------------------- Chart.js -------------------
+}
 
 
 //-------------------- LightGallery --------------------
-
-
 
 
 let innterHTMLcontent = ''; //else this creates an undefined element in the document
@@ -148,62 +146,61 @@ async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightg
 }
 
 
-document.addEventListener('DOMContentLoaded', function() {
+function initializeGallery() {
     loadDivsPromise.then(() => {
 
-    const gallery = document.getElementById('lightgallery');
+        const gallery = document.getElementById('lightgallery');
 
-    gallery_instance = lightGallery(gallery, {
-        container: document.getElementById('galleryContainer'),
-        download: false,
-        controls: true,
-        mousewheel: true,
-        preload: 2,
-        resetScrollPosition: false,
-        showMaximizeIcon: true,
-        plugins: [lgZoom, lgThumbnail, lgAutoplay, lgHash],
-        thumbnail: true,
-        zoom: true,
-        zoomPluginStrings: {
-            zoomIn: 'Zoom in',
-            zoomOut: 'Zoom out',
-            actualSize: 'Actual size'
-        },
-        zoom: {
-            scale: 1.5,
-            zoomFromOrigin: true // Does not seem to work //rtfm
+        gallery_instance = lightGallery(gallery, {
+            container: document.getElementById('galleryContainer'),
+            download: false,
+            controls: true,
+            mousewheel: true,
+            preload: 2,
+            resetScrollPosition: false,
+            showMaximizeIcon: true,
+            plugins: [lgZoom, lgThumbnail, lgAutoplay, lgHash],
+            thumbnail: true,
+            zoom: true,
+            zoomPluginStrings: {
+                zoomIn: 'Zoom in',
+                zoomOut: 'Zoom out',
+                actualSize: 'Actual size'
+            },
+            zoom: {
+                scale: 1.5,
+                zoomFromOrigin: true // Does not seem to work //rtfm
 
-        },
-        autoplay: true,
-        autoplayControls: true,
-        slideShowInterval : 3000,
-        progressBar: true
+            },
+            autoplay: true,
+            autoplayControls: true,
+            slideShowInterval: 3000,
+            progressBar: true
+        });
+
+        gallery.addEventListener('lgContainerResize', (event) => {
+            //changeSlide(1);
+
+            //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
+        });
+
+        gallery.addEventListener('lgAfterSlide', (event) => {
+            const {index, prevIndex} = event.detail;
+
+
+            moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
+
+        });
     });
 
-    gallery.addEventListener('lgContainerResize', (event) => {
-        //changeSlide(1);
-
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-    });
-
-    gallery.addEventListener('lgAfterSlide', (event) => {
-        const { index, prevIndex } = event.detail;
-
-
-        moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-
-    });
-    });
-
-});
-
+}
 
 
 function changeSlide(index) {
     console.log('Attempting to change to slide:', index);
     //gallery_instance.goToSlide(index); ??
     if (gallery_instance) {
-        if(true){
+        if (true) {
             gallery_instance.openGallery(index);//goToNextSlide(); //goToPreviusSlide(); //closeGallery();
         }
         gallery_instance.slide(index);
@@ -231,7 +228,6 @@ let viewer = new Cesium.Viewer('cesiumContainer', {
     selectionIndicator: false,
 });
 viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-
 
 
 const files = new Map([
@@ -274,13 +270,13 @@ promises.push(initialPromise);
 
 let mapPin;
 files.forEach((value, key) => {
-   const promise =  Cesium.GeoJsonDataSource.load(key, {
+    const promise = Cesium.GeoJsonDataSource.load(key, {
         clampToGround: true,
         stroke: value[1],
         strokeWidth: 10
     }).then(dataSource => {
         viewer.dataSources.add(dataSource);
-        if(!mapPin) {
+        if (!mapPin) {
             mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
             viewer.flyTo(mapPin);
             //viewer.zoomTo(mapPin);
@@ -288,11 +284,11 @@ files.forEach((value, key) => {
 
 
         //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
-       //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
-       polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+        //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+        polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
 
 
-   });
+    });
     promises.push(promise);
     if (initialPromiseResolve) {
         initialPromiseResolve();
@@ -323,7 +319,6 @@ async function initialize() {
     //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
     const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
     map = await loadReferenceTables(referenceTablePath);
-
 
 
     if (shouldSort) {
@@ -358,14 +353,16 @@ function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(view
     console.log('Sorting map by keys');
     const sortedMap = new Map();
 
-    map.forEach((value,key) => {
+    map.forEach((value, key) => {
         sortedMap.set(key, getNumPreviousPoints(value, cartArray));
     });
 
-    return new Map([...sortedMap.entries()].sort((a, b) => a[1] - b[1]));;
+    return new Map([...sortedMap.entries()].sort((a, b) => a[1] - b[1]));
+    ;
 
 
 }
+
 function sortMapByKeys(map, sortedKeys) {
     const sortedMap = new Map();
     sortedKeys.forEach((value, key) => {
@@ -377,7 +374,7 @@ function sortMapByKeys(map, sortedKeys) {
 }
 
 function getNumPreviousPoints(pos, cartesianArray) {
-    const key= returnNearestPoints(cartesianArray, pos)[1];
+    const key = returnNearestPoints(cartesianArray, pos)[1];
     return cartesianArray.indexOf(key);
 }
 
@@ -400,9 +397,6 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
 }
 
 
-
-
-
 function loadReferenceTables(referenceTablePath) {
     let map = new Map();
     return fetch(referenceTablePath)
@@ -411,13 +405,13 @@ function loadReferenceTables(referenceTablePath) {
 
             const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
             for (const line of lines) {
-                if(line.startsWith('//')) continue;
+                if (line.startsWith('//')) continue;
                 const [key, valueString, altText] = line.split(';');
                 if (valueString) {
                     const [x, y, z] = valueString.split(' ').map(parseFloat);
                     const value = new Cesium.Cartesian3(x, y, z);
                     map.set(key, value);
-                    constructHTMLdivs(key, valueString, altText );
+                    constructHTMLdivs(key, valueString, altText);
                 } else {
                     console.warn('Invalid line format:', line);
                 }
@@ -431,6 +425,7 @@ function loadReferenceTables(referenceTablePath) {
 }
 
 let callable;
+
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
 
@@ -505,13 +500,13 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     hideButton.title = "Toggle Route Preview Image Visibility";
 
     hideButton.addEventListener("click", () => {
-        if(hideButton.classList.contains('hidden')){
+        if (hideButton.classList.contains('hidden')) {
             hideButton.classList.remove('hidden');
             billboards.forEach(entity => {
                 entity.show = true;
             });
 
-        }else{
+        } else {
             hideButton.classList.add('hidden');
             billboards.forEach(entity => {
                 entity.show = false;
@@ -547,7 +542,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     callable = function () {
         //console.log('callable');
         callable = function () { //this seems like an absolute terrible solution, but it works kinda
-           // console.log('callable');
+            // console.log('callable');
             for (let i = 0; i < 5; i++) { //implement css animation instead
                 setTimeout(() => {
                     triggerHoverEffect(trackButton, 350);
@@ -564,6 +559,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 // Zoom to the latest added entity
 //viewer.zoomTo(viewer.entities); //TODO: uncomment because working
 }
+
 //cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
 const mapButton = document.createElement('button');
 mapButton.textContent = 'Switch to Static Map';
@@ -577,12 +573,11 @@ mapButton.addEventListener('click', () => {
 });
 
 
-
-function initializePlane(map){
+function initializePlane(map) {
     map.forEach((value, key) => {
         console.log('Key:', key, 'Value:', value);
 
-        if(value.x && value.y && value.z) {
+        if (value.x && value.y && value.z) {
             viewer.entities.add({
                 position: value,
                 ellipsoid: {
@@ -594,7 +589,7 @@ function initializePlane(map){
                 },
                 clampToGround: true
             });
-        }else{
+        } else {
             console.warn('No valid cartesian coordinates found for key:', key);
         }
     });
@@ -603,15 +598,15 @@ function initializePlane(map){
 }
 
 const devAddPictures = false;
-if(devAddPictures) {
+if (devAddPictures) {
 
-    viewer.screenSpaceEventHandler.setInputAction(function(click) {
+    viewer.screenSpaceEventHandler.setInputAction(function (click) {
         const pickedObject = viewer.scene.pick(click.position);
         if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polyline) {
             const cartesian = viewer.scene.pickPosition(click.position);
             if (Cesium.defined(cartesian)) {
                 const intersect = findNearestPointOnSegments(returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian), cartesian);
-                if (intersect&&Cesium.defined(intersect)&&intersect.x&&intersect.y&&intersect.z) {
+                if (intersect && Cesium.defined(intersect) && intersect.x && intersect.y && intersect.z) {
                     const redCone = viewer.entities.add({
                         position: intersect,
                         orientation: Cesium.Transforms.headingPitchRollQuaternion(
@@ -631,15 +626,13 @@ if(devAddPictures) {
                     setTimeout(() => {
                         viewer.entities.remove(redCone);
                     }, 2000);
-                }else{
-                    console.error('intersect: ',intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
+                } else {
+                    console.error('intersect: ', intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
 
                 }
             }
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-
 
 
 }
@@ -688,7 +681,7 @@ function approximateNearestMidpoint(positions, clickPosition) {
 
     const leftRelative = leftToPoint / leftToCenter;
     const rightRelative = rightToPoint / rightToCenter;
-    if(leftRelative < rightRelative) {
+    if (leftRelative < rightRelative) {
         console.log('Left is closer');
         const blackBox = viewer.entities.add({
             position: left,
@@ -728,7 +721,6 @@ function approximateNearestMidpoint(positions, clickPosition) {
 
 
 function visualizeSelection(positions, cartesian) {
-
 
 
     const clickedPos = viewer.entities.add({
@@ -833,7 +825,6 @@ function findNearestPointOnSegments(points, point) {
 }
 
 
-
 function initializePin(viewer, initialPosition) {
 
     const mapPin = viewer.entities.add({
@@ -855,16 +846,16 @@ function initializePin(viewer, initialPosition) {
 }
 
 function moveCesiumFigure(index) {
-   //print(map.values[index].position);
+    //print(map.values[index].position);
     //mapPin.position = Cesium.Cartesian3.fromElements(10,10,10);
 
     //print(map.keys()[index]);
-        if(!map){
-            console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
-            return;
-        }
+    if (!map) {
+        console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
+        return;
+    }
 
-   const mapArray = Array.from(map.entries());
+    const mapArray = Array.from(map.entries());
     if (index >= 0 && index < mapArray.length) {
         const [key, value] = mapArray[index];
         //console.log('Key:', key, 'Value:', value);
@@ -874,11 +865,12 @@ function moveCesiumFigure(index) {
     }
     console.log('Is visible:', isEntityInRect(mapPin));
 
-    if(!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
+    if (!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
         callable();
     }
 
 }
+
 function isPositionInView(position) {
 
     const globeBoundingSphere = new Cesium.BoundingSphere(
@@ -966,11 +958,10 @@ function ensureEntityVisible(entity) {
 }
 
 
-
 async function updateRedBoxPosition() {
     return;
     //await new Promise(resolve => setTimeout(resolve, 2000));
-    const { offsetX, offsetY } = raycastOffset(viewer);
+    const {offsetX, offsetY} = raycastOffset(viewer);
     const absoluteCartesian3 = pickRay(viewer.camera);
     console.log('Absolute cartesian3: ', absoluteCartesian3);
     const newPosition = Cesium.Cartesian3.fromElements(
@@ -982,7 +973,7 @@ async function updateRedBoxPosition() {
 }
 
 function createCamCenteredBox_deprecated() {
-    const { offsetX, offsetY } = calcOffset(viewer.camera);
+    const {offsetX, offsetY} = calcOffset(viewer.camera);
 
     console.log('Creating box at: ', viewer.camera.position.x + offsetX, viewer.camera.position.y + offsetY, viewer.camera.position.z);
     console.log('Camera position: ', viewer.camera.position.x, viewer.camera.position.y, viewer.camera.position.z);
@@ -1015,7 +1006,8 @@ function calcOffset(viewerCam) {
     const offsetY = Math.tan(viewerCam.heading) * height;
     return {offsetX, offsetY};
 }
-function camGroundOffset(scene, ellipsoid){
+
+function camGroundOffset(scene, ellipsoid) {
     var cameraHeight = ellipsoid.cartesianToCartographic(scene.camera.position).height;
     return cameraHeight;
 }
@@ -1036,15 +1028,12 @@ function raycastOffset(viewer) {
         const cartographic = Cesium.Cartographic.fromCartesian(intersection);
         const offsetX = cartographic.longitude - camera.positionCartographic.longitude;
         const offsetY = cartographic.latitude - camera.positionCartographic.latitude;
-        return { offsetX, offsetY };
+        return {offsetX, offsetY};
     } else {
         console.warn('No intersection with the ground found.');
-        return { offsetX: 0, offsetY: 0 };
+        return {offsetX: 0, offsetY: 0};
     }
 }
-
-
-
 
 
 function pickRay(viewer) {
@@ -1058,7 +1047,7 @@ function pickRay(viewer) {
         const pickPositionCartographic = Cesium.Cartographic.fromCartesian(pickPosition);
         const apilon = pickPositionCartographic.longitude * (180 / Math.PI);
         const apilat = pickPositionCartographic.latitude * (180 / Math.PI);
-        return { longitude: apilon, latitude: apilat };
+        return {longitude: apilon, latitude: apilat};
     } else {
         console.warn('No intersection with the ground found.');
         return null;
@@ -1076,16 +1065,14 @@ viewer.camera.changed.addEventListener(() => {
 });
 
 
-
 window.onload = () => {
     //changeBackpackPositionOverTime();
 };
 
 
-
 //-------------------Chart.js-------------------
 
-Chart.register( Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
+Chart.register(Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
 
 const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
@@ -1106,7 +1093,7 @@ const ROUTE_DESCENT = 8778; //8778m
 // proportion of the data length to the total route length
 // TODO: test geojson density
 //const labels = data.map((_, index) => ROUTE_LENGTH*(data.length - index-1) / data.length); //the wrong way
-const labels = data.map((_, index) => ROUTE_LENGTH*( (index+1)/ data.length));
+const labels = data.map((_, index) => ROUTE_LENGTH * ((index + 1) / data.length));
 
 
 const chartData = {
@@ -1131,8 +1118,8 @@ const config = {
             chart.options.scales.x.min = Math.min(...chart.data.labels);
             chart.options.scales.x.max = Math.max(...chart.data.labels);
 
-            chart.options.scales.y.max = Math.ceil((maxHeight+500)/500)*500;
-            chart.options.scales.y1.max = Math.ceil((maxHeight+500)/500)*500;
+            chart.options.scales.y.max = Math.ceil((maxHeight + 500) / 500) * 500;
+            chart.options.scales.y1.max = Math.ceil((maxHeight + 500) / 500) * 500;
 
             //chart.options.scales.y.max = Math.floor(maxHeight + 500);
             //chart.options.scales.y1.max = Math.floor(maxHeight + 500);
@@ -1146,16 +1133,20 @@ const config = {
             duration: 7500
         },
         maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        tooltip: { position: 'nearest' },
+        interaction: {intersect: false, mode: 'index'},
+        tooltip: {position: 'nearest'},
         scales: {
-            x: { type: 'linear' },
-            y: { type: 'linear', beginAtZero: true },
-            y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }},
+            x: {type: 'linear'},
+            y: {type: 'linear', beginAtZero: true},
+            y1: {type: 'linear', display: true, position: 'right', beginAtZero: true, grid: {drawOnChartArea: false}},
         },
         plugins: {
-            title: { align: "middle", display: true, text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m` },
-            legend: { display: false },
+            title: {
+                align: "middle",
+                display: true,
+                text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m`
+            },
+            legend: {display: false},
             tooltip: {
                 displayColors: false,
                 callbacks: {
@@ -1172,9 +1163,9 @@ const config = {
                             distance = 'N/A';
                         }
                         return "Distance: " + distance + 'km';
-                        },
+                    },
                     label: (tooltipItem) => {
-                        return "Elevation: " + (Math.ceil(tooltipItem.raw*100)/100).toFixed(2) + 'm'
+                        return "Elevation: " + (Math.ceil(tooltipItem.raw * 100) / 100).toFixed(2) + 'm'
                     },
                 }
             }
@@ -1184,21 +1175,22 @@ const config = {
                 const index = elements[0].index;
                 //const cartesian = gpxData[index*nthElement]; //TODO shouldnt this not work? we ceil to get the division integer
                 //so the nthElement x the size of the shortened list could in some cases be a bit bigger than the actual list thus getting an out of bounds exception
-                const cartesian = gpxData[Math.min(index*nthElement, gpxData.length-1)];
-                mapPin.position=cartesian;
+                const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                mapPin.position = cartesian;
             }
         },
         onHover: (event, elements) => {
-            if(detectLeftButton()){
-           // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
+            if (detectLeftButton()) {
+                // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
                 const index = elements[0].index;
-                const cartesian = gpxData[Math.min(index*nthElement, gpxData.length-1)];
-                mapPin.position= cartesian;
+                const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                mapPin.position = cartesian;
             }
         }
     }
 };
-function detectLeftButton(evt=null) {
+
+function detectLeftButton(evt = null) {
     /*evt = evt || window.event;
     if ("buttons" in evt) {
         return evt.buttons == 1;
