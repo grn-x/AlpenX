@@ -6,11 +6,9 @@
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
 // - refractor and clean up this mess of a code
-// - images to fix:
-//      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
-//      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
 
-//------------------- Entry Point / Main Execution Block -------------------
+
+//------------------- ##START## Entry Point / Main Execution Block -------------------
 loadImages();
 
 
@@ -35,6 +33,12 @@ const shouldSort = false        //used to be global variables, though through ad
 const devAddPictures = false    //to the affected functions, they are scoped and overriden anyways
 initialize(); //inner async loadReferenceTables() call
 cesiumSetup()
+
+// -- ChartJS --
+initializeChart(); // async function, because it relies on await getPolyLines() to get height profile for chart data
+
+//------------------- ##END## Entry Point / Main Execution Block -------------------
+
 
 
 //----------- Masonry Layout Overview -----------
@@ -1090,21 +1094,21 @@ window.onload = () => {
 
 
 //-------------------Chart.js-------------------
+async function initializeChart() {
+    Chart.register(Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
-Chart.register(Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
-
-const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
-const nthElement = Math.ceil(gpxData.length / screen.width);
-const data = gpxData
-    .filter((_, index) => index % nthElement === 0)
-    .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
+    const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
+    const nthElement = Math.ceil(gpxData.length / screen.width);
+    const data = gpxData
+        .filter((_, index) => index % nthElement === 0)
+        .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
 
 // Hardcoding these by gpx.studio from the combined route calculated values like a dumbfuck because i dont wanna
 // go through the pain of calculating these myself in cesium right now, the rest is real though i swear
-const ROUTE_LENGTH = 213950; //213.95km
-const ROUTE_ELEVATION = 8272; //8272m
-const ROUTE_DESCENT = 8778; //8778m
+    const ROUTE_LENGTH = 213950; //213.95km
+    const ROUTE_ELEVATION = 8272; //8272m
+    const ROUTE_DESCENT = 8778; //8778m
 
 
 // Generate labels based on the data length
@@ -1112,124 +1116,131 @@ const ROUTE_DESCENT = 8778; //8778m
 // proportion of the data length to the total route length
 // TODO: test geojson density
 //const labels = data.map((_, index) => ROUTE_LENGTH*(data.length - index-1) / data.length); //the wrong way
-const labels = data.map((_, index) => ROUTE_LENGTH * ((index + 1) / data.length));
+    const labels = data.map((_, index) => ROUTE_LENGTH * ((index + 1) / data.length));
 
 
-const chartData = {
-    labels: labels,
-    datasets: [{
-        data: data,
-        fill: true,
-        borderColor: '#66ccff',
-        backgroundColor: '#66ccff66',
-        tension: 0.1,
-        pointRadius: 0,
-        spanGaps: true
-    }]
-};
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            data: data,
+            fill: true,
+            borderColor: '#66ccff',
+            backgroundColor: '#66ccff66',
+            tension: 0.1,
+            pointRadius: 0,
+            spanGaps: true
+        }]
+    };
 
-const config = {
-    type: 'line',
-    data: chartData,
-    plugins: [{
-        beforeInit: (chart, args, options) => {
-            const maxHeight = Math.max(...chart.data.datasets[0].data);
-            chart.options.scales.x.min = Math.min(...chart.data.labels);
-            chart.options.scales.x.max = Math.max(...chart.data.labels);
+    const config = {
+        type: 'line',
+        data: chartData,
+        plugins: [{
+            beforeInit: (chart, args, options) => {
+                const maxHeight = Math.max(...chart.data.datasets[0].data);
+                chart.options.scales.x.min = Math.min(...chart.data.labels);
+                chart.options.scales.x.max = Math.max(...chart.data.labels);
 
-            chart.options.scales.y.max = Math.ceil((maxHeight + 500) / 500) * 500;
-            chart.options.scales.y1.max = Math.ceil((maxHeight + 500) / 500) * 500;
+                chart.options.scales.y.max = Math.ceil((maxHeight + 500) / 500) * 500;
+                chart.options.scales.y1.max = Math.ceil((maxHeight + 500) / 500) * 500;
 
-            //chart.options.scales.y.max = Math.floor(maxHeight + 500);
-            //chart.options.scales.y1.max = Math.floor(maxHeight + 500);
+                //chart.options.scales.y.max = Math.floor(maxHeight + 500);
+                //chart.options.scales.y1.max = Math.floor(maxHeight + 500);
 
-            //chart.options.scales.y.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); i could round that up to
-            //chart.options.scales.y1.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); the nearest 100 but why actually?
-        }
-    }],
-    options: {
-        animation: {
-            duration: 7500
-        },
-        maintainAspectRatio: false,
-        interaction: {intersect: false, mode: 'index'},
-        tooltip: {position: 'nearest'},
-        scales: {
-            x: {type: 'linear'},
-            y: {type: 'linear', beginAtZero: true},
-            y1: {type: 'linear', display: true, position: 'right', beginAtZero: true, grid: {drawOnChartArea: false}},
-        },
-        plugins: {
-            title: {
-                align: "middle",
-                display: true,
-                text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m`
+                //chart.options.scales.y.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); i could round that up to
+                //chart.options.scales.y1.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); the nearest 100 but why actually?
+            }
+        }],
+        options: {
+            animation: {
+                duration: 7500
             },
-            legend: {display: false},
-            tooltip: {
-                displayColors: false,
-                callbacks: {
-                    title: (tooltipItems) => {
-                        /*console.log('Tooltip items1:', tooltipItems);
-                        console.log('Tooltip items:', tooltipItems[0].label);
-                        console.log('Tooltip items:', tooltipItems[0].raw);
-                        console.log('Tooltip items4:', parseFloat(tooltipItems[0].label));*/
-                        let distance;
-                        try {
-                            distance = (parseFloat(tooltipItems[0].label.replace(/,/g, '')) / 1000).toFixed(2);
-                        } catch (error) { // what the actual fuck does chartjs expect me to parse there, that looks like a recipe for parsing crashes
-                            console.error('Error parsing distance:', error);
-                            distance = 'N/A';
-                        }
-                        return "Distance: " + distance + 'km';
-                    },
-                    label: (tooltipItem) => {
-                        return "Elevation: " + (Math.ceil(tooltipItem.raw * 100) / 100).toFixed(2) + 'm'
-                    },
+            maintainAspectRatio: false,
+            interaction: {intersect: false, mode: 'index'},
+            tooltip: {position: 'nearest'},
+            scales: {
+                x: {type: 'linear'},
+                y: {type: 'linear', beginAtZero: true},
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: {drawOnChartArea: false}
+                },
+            },
+            plugins: {
+                title: {
+                    align: "middle",
+                    display: true,
+                    text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m`
+                },
+                legend: {display: false},
+                tooltip: {
+                    displayColors: false,
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            /*console.log('Tooltip items1:', tooltipItems);
+                            console.log('Tooltip items:', tooltipItems[0].label);
+                            console.log('Tooltip items:', tooltipItems[0].raw);
+                            console.log('Tooltip items4:', parseFloat(tooltipItems[0].label));*/
+                            let distance;
+                            try {
+                                distance = (parseFloat(tooltipItems[0].label.replace(/,/g, '')) / 1000).toFixed(2);
+                            } catch (error) { // what the actual fuck does chartjs expect me to parse there, that looks like a recipe for parsing crashes
+                                console.error('Error parsing distance:', error);
+                                distance = 'N/A';
+                            }
+                            return "Distance: " + distance + 'km';
+                        },
+                        label: (tooltipItem) => {
+                            return "Elevation: " + (Math.ceil(tooltipItem.raw * 100) / 100).toFixed(2) + 'm'
+                        },
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    //const cartesian = gpxData[index*nthElement]; //TODO shouldnt this not work? we ceil to get the division integer
+                    //so the nthElement x the size of the shortened list could in some cases be a bit bigger than the actual list thus getting an out of bounds exception
+                    const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                    mapPin.position = cartesian;
+                }
+            },
+            onHover: (event, elements) => {
+                if (detectLeftButton()) {
+                    // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
+                    const index = elements[0].index;
+                    const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                    mapPin.position = cartesian;
                 }
             }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const index = elements[0].index;
-                //const cartesian = gpxData[index*nthElement]; //TODO shouldnt this not work? we ceil to get the division integer
-                //so the nthElement x the size of the shortened list could in some cases be a bit bigger than the actual list thus getting an out of bounds exception
-                const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
-                mapPin.position = cartesian;
-            }
-        },
-        onHover: (event, elements) => {
-            if (detectLeftButton()) {
-                // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
-                const index = elements[0].index;
-                const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
-                mapPin.position = cartesian;
-            }
         }
-    }
-};
+    };
 
-function detectLeftButton(evt = null) {
-    /*evt = evt || window.event;
-    if ("buttons" in evt) {
-        return evt.buttons == 1;
+    function detectLeftButton(evt = null) {
+        /*evt = evt || window.event;
+        if ("buttons" in evt) {
+            return evt.buttons == 1;
+        }
+        var button = evt.which || evt.button;
+        return button == 1;
+    //----
+        if(window.event.which==1){
+            return true;
+        }*/
+//----
+        //if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
+        return false;
     }
-    var button = evt.which || evt.button;
-    return button == 1;
-//----
-    if(window.event.which==1){
-        return true;
-    }*/
-//----
-    //if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
-    return false;
+
+    const ctx = document.getElementById("route-elevation-chart").getContext("2d");
+    const chart = new Chart(ctx, config);
+
 }
 
-const ctx = document.getElementById("route-elevation-chart").getContext("2d");
-const chart = new Chart(ctx, config);
-
-
-let isFallbackLoaded = false;
+let isFallbackLoaded = false; //move to top? isnt related to anything but the fallback content
 
 function toggleFallbackContent(buttonElement) {
     const cesiumContainer = document.getElementById('cesiumContainer');
