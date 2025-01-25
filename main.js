@@ -9,53 +9,80 @@
 
 
 //------------------- ##START## Entry Point / Main Execution Block -------------------
-loadImages();
-
-
-// -- LightGallery --
+let innterHTMLcontent = ''; //else this creates an undefined element in the document
 let gallery_instance;
 let loadDivsPromiseResolve;
 const loadDivsPromise = new Promise((resolve) => {
     loadDivsPromiseResolve = resolve;
 });
-document.addEventListener('DOMContentLoaded', initializeGallery);
 
+let name_coordinate_mapping;
+let name_order_mapping;
+let viewer;
+const polylines = [];
+const promises = [];
+let initialPromiseResolve;
+let mapPin;
+let callable;
+
+const shouldSort = false;       //used to be global variables, though through adding identical parameters
+const devAddPictures = false;   //to the affected functions, they are scoped and overriden anyways
+
+
+const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
+[name_coordinate_mapping, name_order_mapping] = await loadReferenceTables(referenceTablePath); //.then
+
+loadImages(name_order_mapping);
+
+
+// -- LightGallery --
+
+document.addEventListener('DOMContentLoaded', initializeGallery());
+console.log('dom content loaded callback pushed');
 // -- CesiumJS --
-let viewer
-let map
-const polylines = []
-const promises = []
-let initialPromiseResolve
-let mapPin
-let callable
 
-const shouldSort = false        //used to be global variables, though through adding identical parameters
-const devAddPictures = false    //to the affected functions, they are scoped and overriden anyways
-initialize(); //inner async loadReferenceTables() call
-cesiumSetup()
-
+cesiumSetup();//inner async loadReferenceTables() call
 // -- ChartJS --
 initializeChart(); // async function, because it relies on await getPolyLines() to get height profile for chart data
 
 //------------------- ##END## Entry Point / Main Execution Block -------------------
 
 
+function loadReferenceTables(referenceTablePath) {
+    let name_coordinate_map = new Map();
+    let name_index_map = new Map(); //this could be passed to the sort function before adding the billboards
+                            // and instantiating the lightgallery, but its more efficient to have the lookup table preordered
+    return fetch(referenceTablePath)
+        .then(response => response.text())
+        .then(text => {
+            let counter = 0;
+            const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
+            for (const line of lines) {
+                if (line.startsWith('//')) continue;
+                const [key, valueString, altText] = line.split(';');
+                if (valueString) {
+                    const [x, y, z] = valueString.split(' ').map(parseFloat);
+                    const value = new Cesium.Cartesian3(x, y, z);
+                    name_coordinate_map.set(key, value);
+                    name_index_map.set(key, counter++);
+                    constructHTMLdivs(key, valueString, altText);
+                } else {
+                    console.warn('Invalid line format:', line);
+                }
+            }
+            loadHTMLdivs(); // async function, because it relies on await loadReferenceTables(), thus making use of the load
+
+
+            return [name_coordinate_map, name_index_map];
+        });
+}
+
 
 //----------- Masonry Layout Overview -----------
-async function loadImages() {
-    const response = await fetch('geodata/imgsource/final_sorted.txt');
-    const text = await response.text();
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-
-    const imageMap = new Map();
-    lines.forEach((line, index) => {
-        const [filename] = line.split(';');
-        if (!imageMap.has(filename)) {
-            imageMap.set(filename, index);
-        }
-    }); //TODO: refactor this to a seperate function, make loadImages accept map
-    //Looping is done multiple times, combine
-
+/** Load images into the masonry layout, the images are sorted by the order they appear in the reference table in
+ * @param map a map that doesnt associate the image name with the location or author but rather the correct index assuming correct order*/
+async function
+loadImages(map) {
 
     const masonry_images = [
         ['20240707_101042000_iOS 2.jpg', 'Tag 0 <br> Bahnhof Bamberg'],
@@ -89,7 +116,7 @@ async function loadImages() {
         ['DSC09949.jpg', 'Tag 6 <br> Aufstieg zu Similaun Hütte'],
         ['DSC09973.jpg', 'Tag 6 <br> Ankunft auf der Similaun Hütte'],
         ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
-    ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
+    ].map(([filename, name]) => [filename, name, map.get(filename) || 0]);
 
     masonry_images.sort((a, b) => a[2] - b[2]);
 
@@ -134,7 +161,6 @@ async function loadImages() {
 //-------------------- LightGallery --------------------
 
 
-let innterHTMLcontent = ''; //else this creates an undefined element in the document
 function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
     const elementString = `
         <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
@@ -145,8 +171,13 @@ function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata
     innterHTMLcontent += elementString;
 }
 
-
-async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
+/** Append the constructed picture divs string into the lightgallery element, this method manages the timing(the dom structure does not exist
+ * upon immediate page load) and ensures through the globally defined promise, that other methods depending on the pictures
+ * (like the lightgallery instantiation) get triggered at the correct time
+ * this is called by {@link loadReferenceTables} because {@link constructHTMLdivs} needs to complete
+ * its cycle beforehand */
+//is async necessary? it shouldnt at least
+function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
     const addElement = () => {
         galleryHTMLelement.innerHTML = innterHTMLcontent;
         loadDivsPromiseResolve(); // Resolve the promise when loadHTMLdivs is completed
@@ -163,8 +194,9 @@ async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightg
 
 
 function initializeGallery() {
+    console.log('Initializing LightGallery scheduled');
     loadDivsPromise.then(() => {
-
+        console.log('promise resolved');
         const gallery = document.getElementById('lightgallery');
 
         gallery_instance = lightGallery(gallery, {
@@ -241,8 +273,9 @@ function changeSlide(index) {
 //let initialPromiseResolve
 //let mapPin
 //let callable
-
-function cesiumSetup(shouldSort=false) {
+//await because of poylines, which are kinda fucked up with the cesium backend; route adding promises are not awaited
+// -> so the polylines you somehow have to await the promises, to get all polylines, which are also needed here when sorting later on, what a chaos
+async function cesiumSetup(shouldSort = false, devAddPictures = false) {
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
     viewer = new Cesium.Viewer('cesiumContainer', {
         terrain: Cesium.Terrain.fromWorldTerrain(),
@@ -378,7 +411,35 @@ function cesiumSetup(shouldSort=false) {
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
+
+    if (shouldSort) {
+
+        console.log('Sorting map by keys');
+        name_coordinate_mapping.forEach((value, key) => {
+            //console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key +'\n'+ value);
+        });
+        const sortedKeys = sortMapKeys(name_coordinate_mapping, viewer, await getPolyLines(true));
+
+        name_coordinate_mapping = sortMapByKeys(name_coordinate_mapping, sortedKeys);
+        let mapString = '';
+        name_coordinate_mapping.forEach((value, key) => {
+            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);
+
+            mapString += `${key};${value}\n`;
+        });
+
+        navigator.clipboard.writeText(mapString).then(() => {
+            console.log('Map data copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    initializeBillboards(name_coordinate_mapping, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
+
+
 }
+
 async function getPolyLines(flat = true) {
     const start = performance.now();
     //console.log('Getting polylines: ' + polylines);
@@ -397,37 +458,7 @@ async function getPolyLines(flat = true) {
 }
 
 
-async function initialize(shouldSort = false, devAddPictures = false) {
-    //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
-    const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
-    map = await loadReferenceTables(referenceTablePath);
 
-
-    if (shouldSort) {
-
-        console.log('Sorting map by keys');
-        map.forEach((value, key) => {
-            //console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key +'\n'+ value);
-        });
-        const sortedKeys = sortMapKeys(map, viewer, await getPolyLines(true));
-
-        map = sortMapByKeys(map, sortedKeys);
-        let mapString = '';
-        map.forEach((value, key) => {
-            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);
-
-            mapString += `${key};${value}\n`;
-        });
-
-        navigator.clipboard.writeText(mapString).then(() => {
-            console.log('Map data copied to clipboard');
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
-    }
-
-    initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
-}
 
 
 function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(viewer, true)) {
@@ -478,34 +509,6 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
 }
 
 
-function loadReferenceTables(referenceTablePath) {
-    let map = new Map();
-    return fetch(referenceTablePath)
-        .then(response => response.text())
-        .then(text => {
-
-            const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
-            for (const line of lines) {
-                if (line.startsWith('//')) continue;
-                const [key, valueString, altText] = line.split(';');
-                if (valueString) {
-                    const [x, y, z] = valueString.split(' ').map(parseFloat);
-                    const value = new Cesium.Cartesian3(x, y, z);
-                    map.set(key, value);
-                    constructHTMLdivs(key, valueString, altText);
-                } else {
-                    console.warn('Invalid line format:', line);
-                }
-            }
-
-            loadHTMLdivs();
-
-
-            return map;
-        });
-}
-
-
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
 
@@ -514,7 +517,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
             const entity = viewer.entities.add({
                 position: value,
                 billboard: {
-                    image: `${prePath}/thumbnail_${key}`, // Path to the image file
+                    image: `${prePath}/thumbnail_${key}`,
                     width: 50,
                     height: 50,
                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
@@ -873,12 +876,12 @@ function moveCesiumFigure(index) {
     //mapPin.position = Cesium.Cartesian3.fromElements(10,10,10);
 
     //print(map.keys()[index]);
-    if (!map) {
+    if (!name_coordinate_mapping) {
         console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
         return;
     }
 
-    const mapArray = Array.from(map.entries());
+    const mapArray = Array.from(name_coordinate_mapping.entries());
     if (index >= 0 && index < mapArray.length) {
         const [key, value] = mapArray[index];
         //console.log('Key:', key, 'Value:', value);
@@ -982,7 +985,7 @@ function ensureEntityVisible(entity) {
 
 
 async function updateRedBoxPosition() {
-    return;
+    //return;
     //await new Promise(resolve => setTimeout(resolve, 2000));
     const {offsetX, offsetY} = raycastOffset(viewer);
     const absoluteCartesian3 = pickRay(viewer.camera);
