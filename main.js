@@ -31,10 +31,10 @@ let initialPromiseResolve
 let mapPin
 let callable
 
-const shouldSort = false
-const devAddPictures = false
-initialize();
-cesiumSetup(devAddPictures)
+const shouldSort = false        //used to be global variables, though through adding identical parameters
+const devAddPictures = false    //to the affected functions, they are scoped and overriden anyways
+initialize(); //inner async loadReferenceTables() call
+cesiumSetup()
 
 
 //----------- Masonry Layout Overview -----------
