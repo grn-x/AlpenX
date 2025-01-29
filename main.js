@@ -27,8 +27,23 @@ let callable;
 
 const shouldSort = false;       //used to be global variables, though through adding identical parameters
 const devAddPictures = false;   //to the affected functions, they are scoped and overriden anyways
+let isFallbackLoaded = false;
 
 
+
+let mapButton;
+function domContentLoadedCallback() {
+    mapButton = document.createElement('button');
+    mapButton.textContent = 'Switch to Static Map';
+    mapButton.style.position = 'absolute';
+    mapButton.style.top = '10px';
+    mapButton.style.left = '10px';
+    document.body.appendChild(mapButton);
+
+    mapButton.addEventListener('click', () => {
+        toggleFallbackContent(mapButton);
+    });
+}
 const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
 [name_coordinate_mapping, name_order_mapping] = await loadReferenceTables(referenceTablePath); //.then
 
@@ -38,10 +53,16 @@ loadImages(name_order_mapping);
 // -- LightGallery --
 
 document.addEventListener('DOMContentLoaded', initializeGallery());
+document.addEventListener('DOMContentLoaded', domContentLoadedCallback);
 console.log('dom content loaded callback pushed');
 // -- CesiumJS --
-
-cesiumSetup();//inner async loadReferenceTables() call
+try {
+    cesiumSetup();//inner async loadReferenceTables() call
+}catch (e) {
+    console.error('The Cesium Setup method returned an error, switching to fallback mode');
+    alert('The Cesium Setup method returned an error, switching to fallback mode\n' + e);
+    toggleFallbackContent(mapButton);
+}
 // -- ChartJS --
 initializeChart(); // async function, because it relies on await getPolyLines() to get height profile for chart data
 
@@ -346,7 +367,8 @@ function changeSlide(index) {
  */
 async function cesiumSetup(shouldSort = false, devAddPictures = false) {
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
-    viewer = new Cesium.Viewer('cesiumContainer', {
+    try {
+        viewer = new Cesium.Viewer('cesiumContainer', {
         terrain: Cesium.Terrain.fromWorldTerrain(),
         homeButton: false,
         sceneModePicker: false,
@@ -432,17 +454,6 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
 
     });
 
-//cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
-    const mapButton = document.createElement('button');
-    mapButton.textContent = 'Switch to Static Map';
-    mapButton.style.position = 'absolute';
-    mapButton.style.top = '10px';
-    mapButton.style.left = '10px';
-    document.body.appendChild(mapButton);
-
-    mapButton.addEventListener('click', () => {
-        toggleFallbackContent(mapButton);
-    });
 
     if (devAddPictures) {
 
@@ -501,7 +512,11 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
     }
 
     initializeBillboards(name_coordinate_mapping, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
-
+    } catch (e) {
+        console.error('CesiumJS failed to initialize, switching to fallback mode');
+        alert('CesiumJS failed to initialize, switching to fallback mode\n' + e);
+        toggleFallbackContent();
+    }
 
 }
 /**
@@ -668,6 +683,7 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
  * - Enable interaction with the billboards to change slides in the gallery.
  */
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
+    throw new Error('This function is deprecated, use the new version instead');
     const billboards = [];
 
     map.forEach((value, key) => {
@@ -1113,7 +1129,7 @@ function initializePin(viewer, initialPosition) {
 
 
 /**
- * Moves the CesiumJS map pin to the position corresponding to the given index in the name-coordinate mapping, defined in the global variable `name_coordinate_mapping`. //TODO
+ * Moves the CesiumJS map pin to the position corresponding to the given index in the name-coordinate mapping, defined in the global variable `name_coordinate_mapping`.
  *
  * This function updates the position of the global `mapPin` entity to the coordinates associated with the specified index
  * in the `name_coordinate_mapping`. It also checks if the map pin is within the current view and triggers a hover effect
@@ -1140,7 +1156,7 @@ function moveCesiumFigure(index) {
         return;
     }
 
-    const mapArray = Array.from(name_coordinate_mapping.entries()); //TODO replace this with name_order_mapping
+    const mapArray = Array.from(name_coordinate_mapping.entries());
     if (index >= 0 && index < mapArray.length) {
         const [key, value] = mapArray[index];
         //console.log('Key:', key, 'Value:', value);
@@ -1521,7 +1537,6 @@ async function initializeChart() {
 
 }
 
-let isFallbackLoaded = false; //move to top? isnt related to anything but the fallback content
 
 function toggleFallbackContent(buttonElement) {
     const cesiumContainer = document.getElementById('cesiumContainer');
@@ -1555,6 +1570,10 @@ function toggleFallbackContent(buttonElement) {
         iframe.src = 'StaticMap.html';
         iframe.style.display = 'block';
         isFallbackLoaded = true;
-        buttonElement.textContent = 'Switch to Dynamic Map';
+        try {
+            buttonElement.textContent = 'Switch to Dynamic Map'; //happend in testing, this will get executed rarely anyways
+        }catch (error) {
+            console.error('Failed to set button text:', error);
+        }
     }
 }
