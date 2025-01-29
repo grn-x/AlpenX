@@ -30,7 +30,6 @@ const devAddPictures = false;   //to the affected functions, they are scoped and
 let isFallbackLoaded = false;
 
 
-
 let mapButton;
 function domContentLoadedCallback() {
     mapButton = document.createElement('button');
@@ -53,8 +52,7 @@ loadImages(name_order_mapping);
 // -- LightGallery --
 
 document.addEventListener('DOMContentLoaded', initializeGallery());
-document.addEventListener('DOMContentLoaded', domContentLoadedCallback);
-
+document.addEventListener('DOMContentLoaded', domContentLoadedCallback());
 // -- CesiumJS --
 try {
     cesiumSetup();//inner async loadReferenceTables() call
@@ -711,7 +709,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
                         const index = Array.from(map.keys()).indexOf(pickedObject.id);
                         const selfIndex = billboards.indexOf(pickedObject.id);
                         // console.log('Clicked on entity:', pickedObject.id, ' at index:', index, 'selfIndex:', selfIndex);
-                        // changeSlide(billboards.indexOf(pickedObject.id));
+                        changeSlide(billboards.indexOf(pickedObject.id));
                     }
                 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
             }
@@ -1146,6 +1144,11 @@ function moveCesiumFigure(index) {
         console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
         return;
     }
+    if (!mapPin) {
+        console.warn('Map Pin not loaded up yet! Wait a few milliseconds for the site to fully initialize');
+        return; // i have a strong feeling that this error gets triggered, when the website url contains an image, and
+        // he loading up of which is in some rare cases faster than the cesium setup, causing the mapPin to be null
+    }
 
     const mapArray = Array.from(name_coordinate_mapping.entries());
     if (index >= 0 && index < mapArray.length) {
@@ -1529,7 +1532,7 @@ async function initializeChart() {
 }
 
 
-function toggleFallbackContent(buttonElement) {
+function toggleFallbackContent_dpr(buttonElement) {
     const cesiumContainer = document.getElementById('cesiumContainer');
 
     if (isFallbackLoaded) {
@@ -1564,6 +1567,35 @@ function toggleFallbackContent(buttonElement) {
         try {
             buttonElement.textContent = 'Switch to Dynamic Map'; //happend in testing, this will get executed rarely anyways
         }catch (error) {
+            console.error('Failed to set button text:', error);
+        }
+    }
+}
+
+function toggleFallbackContent(buttonElement) {
+    const cesiumContainer = document.getElementById('cesiumContainer');
+    const iframe = document.getElementById('static-map-iframe');
+
+    if (isFallbackLoaded) {
+        location.reload(); // Reload because I'm too cheap to implement a proper toggle :)
+    } else {
+        cesiumContainer.style.display = 'none';
+
+        // Show the iframe
+        iframe.src = 'StaticMap.html';
+        iframe.style.display = 'block';
+
+        // Add an event listener to load the script after the iframe content is loaded
+        iframe.addEventListener('load', () => {
+            const script = document.createElement('script');
+            script.src = 'StaticMap.js';
+            document.body.appendChild(script);
+        });
+
+        isFallbackLoaded = true;
+        try {
+            buttonElement.textContent = 'Switch to Dynamic Map';
+        } catch (error) {
             console.error('Failed to set button text:', error);
         }
     }
