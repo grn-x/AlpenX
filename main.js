@@ -45,6 +45,22 @@ cesiumSetup();//inner async loadReferenceTables() call
 // -- ChartJS --
 initializeChart(); // async function, because it relies on await getPolyLines() to get height profile for chart data
 
+
+// Add Cesium OSM Buildings, a global 3D buildings layer.
+Cesium.createOsmBuildingsAsync().then(buildingTileset => {
+    viewer.scene.primitives.add(buildingTileset);
+});
+
+/*
+viewer.camera.changed.addEventListener(() => {
+    //updateRedBoxPosition();
+});
+
+
+window.onload = () => {
+    //changeBackpackPositionOverTime();
+};*/
+
 //------------------- ##END## Entry Point / Main Execution Block -------------------
 
 
@@ -80,9 +96,8 @@ function loadReferenceTables(referenceTablePath) {
 
 //----------- Masonry Layout Overview -----------
 /** Load images into the masonry layout, the images are sorted by the order they appear in the reference table in
- * @param map a map that doesnt associate the image name with the location or author but rather the correct index assuming correct order*/
-async function
-loadImages(map) {
+ * @param map a map that doesnt associate the image name with the location or author but rather the index assuming correct order*/
+function loadImages(map) {
 
     const masonry_images = [
         ['20240707_101042000_iOS 2.jpg', 'Tag 0 <br> Bahnhof Bamberg'],
@@ -160,7 +175,22 @@ loadImages(map) {
 
 //-------------------- LightGallery --------------------
 
-
+/**
+ * Constructs HTML anchor elements with embedded image tags for a gallery and appends them to the global `innterHTMLcontent` string.
+ *
+ * This function is used to create HTML anchor elements that link to full-sized images and contain thumbnail images.
+ * The constructed HTML string is appended to the global `innterHTMLcontent` variable.
+ *
+ * @param {string} filename - The name of the image file.
+ * @param {string} location - The location coordinates of the image.
+ * @param {string} altText - The alternative text for the image.
+ * @param {string} [thumbnailPath='geodata/imgsource/combined-thumbnail'] - The path to the thumbnail images.
+ * @param {string} [imagePath='geodata/imgsource/combined'] - The path to the full-sized images.
+ *
+ * @see {@link loadReferenceTables} - This function calls `constructHTMLdivs` to create HTML elements for each image in the reference table.
+ * <br>
+ * @see {@link loadHTMLdivs} - The resulting HTML string is used by this function to populate the gallery element in the DOM.
+ */
 function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
     const elementString = `
         <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
@@ -192,7 +222,16 @@ function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery
     }
 }
 
-
+/**
+ * Initializes the LightGallery instance and sets up event listeners for gallery interactions.
+ *
+ * This function schedules the initialization of LightGallery once the `loadDivsPromise` is resolved.
+ * It configures the gallery with various options such as zoom, autoplay, and thumbnail display.
+ * Event listeners are added to handle gallery resize and slide change events.
+ *
+ * @see loadDivsPromise - The promise that resolves when the HTML divs are loaded.
+ * @see moveCesiumFigure - Function to move the Cesium figure based on the current slide index.
+ */
 function initializeGallery() {
     console.log('Initializing LightGallery scheduled');
     loadDivsPromise.then(() => {
@@ -243,7 +282,17 @@ function initializeGallery() {
 
 }
 
-
+/**
+ * Changes the current slide in the LightGallery instance to the specified index.
+ *
+ * This method acts as an interface between the LightGallery instance and
+ * the CesiumJS viewer, and the masonry layout (add graph later).
+ *
+ * @param {number} index - The index of the slide to change to.
+ *
+ * @see {@link loadImages} - places a click event on the masonry layout images to call this function.
+ * @see {@link initializeBillboards} - places a click event on the CesiumJS billboards to call this function.
+ */
 function changeSlide(index) {
     console.log('Attempting to change to slide:', index);
     //gallery_instance.goToSlide(index); ??
@@ -275,6 +324,26 @@ function changeSlide(index) {
 //let callable
 //await because of poylines, which are kinda fucked up with the cesium backend; route adding promises are not awaited
 // -> so the polylines you somehow have to await the promises, to get all polylines, which are also needed here when sorting later on, what a chaos
+
+/**
+ * Sets up the CesiumJS viewer with various configurations and loads GeoJSON data sources for the gpx path.
+ *
+ * This function sets up event listeners for user interactions and
+ * handles the sorting of map keys if necessary/stated and the initialization of billboards.
+ *
+ * @param {boolean} [shouldSort=false] - Indicates whether the map keys should be sorted. This was used in testing,
+ * but is not necessary for the final version, after some refractors, the original system of sorting the map keys,
+ * then printing them, to parse them into a lookuptable is not required anymore
+ * @param {boolean} [devAddPictures=false] - Indicates whether to enable developer mode for adding pictures,
+ * which allows the user to add pictures to the map by clicking on the path. From there, Red cones would be placed to indicate
+ * the selected positon, the cartesian 3 coordinates are automatically copied to the clipboard for the python mapping script to
+ * access those. Billboard click events would subsqeuntly be ignored
+ *
+ * This method is called from the main execution block of the application to set up the CesiumJS viewer and asynchronously load the dependent data.
+ * It ensures that the viewer is properly configured and that the GeoJSON data sources are loaded and displayed. //TODO add try catch and switch to fallback mode if cesium fails
+ *
+ * @see {@link initializeBillboards} - This function is called to initialize the billboards after the GeoJSON data sources are loaded.
+ */
 async function cesiumSetup(shouldSort = false, devAddPictures = false) {
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
     viewer = new Cesium.Viewer('cesiumContainer', {
@@ -428,18 +497,29 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
             mapString += `${key};${value}\n`;
         });
 
-        navigator.clipboard.writeText(mapString).then(() => {
-            console.log('Map data copied to clipboard');
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
+        await writeToClipboard(mapString);
     }
 
     initializeBillboards(name_coordinate_mapping, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
 
 
 }
-
+/**
+ * Retrieves and optionally flattens the polylines from the CesiumJS viewer. Acts as an interface for synchronous access to the asynchronous data loading process.
+ *
+ * This function waits for all promises in the `promises` array to resolve, which ensures that all GeoJSON data sources are loaded.
+ * It then returns the polylines, either as a flat array or a nested array, depending on the `flat` parameter.
+ * The duration of the await call is logged to the console.
+ *
+ * @param {boolean} [flat=true] - If true, the returned polylines array will be flattened.
+ *
+ * This method is called from various parts of the application where polylines data is required, such as:
+ * - {@link initializeChart} - Uses the polylines data to generate the height profile for the chart.
+ * - {@link sortMapKeys} - Uses the polylines data to sort the map keys based on their positions.
+ * - {@link cesiumSetup} - Ensures that all polylines are loaded before proceeding with further setup.
+ *
+ * @returns {Promise<Array>} A promise that resolves to an array of polylines, either flattened or nested.
+ */
 async function getPolyLines(flat = true) {
     const start = performance.now();
     //console.log('Getting polylines: ' + polylines);
@@ -460,8 +540,28 @@ async function getPolyLines(flat = true) {
 
 
 
-
-function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(viewer, true)) {
+/**
+ * Sorts the keys of a map based on the number of previous points in a Cartesian array.
+ *
+ * This function sorts the keys of the provided map by calculating the number of previous points for each value
+ * in the Cartesian array. The sorted map is returned with keys ordered by their calculated values. {@link getNumPreviousPoints}
+ *
+ * This methods result can be combined with this methods map parameter and piped into {@link sortMapByKeys} to sort the map
+ *
+ * @param {Map} map - The map to be sorted, where keys are image filenames and values are their corresponding Cartesian coordinates.
+ * @param {Cesium.Viewer} viewer - The CesiumJS viewer instance used to retrieve the Cartesian arrays.
+ * Deprecated because it didnt work, this was the reason to add the getPolyLines() function
+ * @param {Array} [cartArray=getPolyLines(true)] - The Cartesian array of polylines used for sorting. {@link getPolyLines}
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Was used during development and called if the sort flag was set to true.
+ * Back then it wasnt possible to sort and initialize the billboards in one go.
+ * Now after some refractoring sessions it should be, though it isnt used anymore, because the lookuptable is preordered
+ *
+ *
+ * @returns {Map} A new map with keys sorted based on the number of previous points in the Cartesian array.
+ */
+function sortMapKeys(map, viewer, cartArray) {
     console.log('Sorting map by keys');
     const sortedMap = new Map();
 
@@ -475,6 +575,20 @@ function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(view
 
 }
 
+/**
+ * Sorts a map based on a provided array of sorted keys.
+ *
+ * This function creates a new map with keys ordered according to the provided sorted keys array.
+ * A possible parameter for the sorted keys array is the result of {@link sortMapKeys}.
+ * @param {Map} map - The original map to be sorted.
+ * @param {Array} sortedKeys - The array of sorted keys used to order the map.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Ensures that the map keys are sorted before initializing billboards.
+ *
+ *
+ * @returns {Map} A new map with keys sorted according to the provided sorted keys array.
+ */
 function sortMapByKeys(map, sortedKeys) {
     const sortedMap = new Map();
     sortedKeys.forEach((value, key) => {
@@ -484,12 +598,32 @@ function sortMapByKeys(map, sortedKeys) {
     });
     return sortedMap;
 }
-
+/**
+ * Calculates the number of previous points in a Cartesian array relative to a given position.
+ *
+ * This function finds the nearest point to the given position in the Cartesian array and returns its index.
+ * The index represents the number of previous points in the array relative to the given position.
+ *
+ * @param {Cesium.Cartesian3} pos - The position to find the nearest point to.
+ * @param {Array<Cesium.Cartesian3>} cartesianArray - The array of Cartesian points to search within.
+ *
+ * This method is called from:
+ * - {@link sortMapKeys} - Uses this function to determine the number of previous points for each value in the map.
+ *
+ * The result is used to:
+ * - Sort the keys of a map based on their positions in the Cartesian array.
+ *
+ * @returns {number} The index of the nearest point in the Cartesian array, representing the number of previous points.
+ */
 function getNumPreviousPoints(pos, cartesianArray) {
     const key = returnNearestPoints(cartesianArray, pos)[1];
     return cartesianArray.indexOf(key);
 }
 
+/**
+ * @deprecated Used to retrieve polylines loaded as datasources into the viewer, but didnt work,
+ * functionality replaced by async {@link getPolyLines}
+ * */
 function getPolylinesAsCartesianArrays(viewer, fuse = false) {
     console.log('Getting polylines as cartesian arrays');
     const polylines = [];
@@ -508,7 +642,31 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
     }
 }
 
-
+/**
+ * Initializes billboards on the CesiumJS viewer based on the provided map of Cartesian coordinates.
+ *
+ * This function adds billboards to the CesiumJS viewer for each entry in the provided map. Each billboard is positioned
+ * at the corresponding Cartesian coordinates and displays an image. Optionally, click events can be added to the billboards
+ * to trigger slide changes in the gallery, by calling the interfacing method {@link changeSlide}.
+ *
+ * @param {Map} map - A map where keys are image filenames and values are their corresponding Cartesian coordinates.
+ * @param {string} [prePath='/geodata/imgsource/combined-thumbnail'] - The path to the thumbnail images.
+ * @param {boolean} [addClickEvent=true] - If true, click events are added to the billboards to change slides in the gallery
+ * using {@link changeSlide} this flag is needed during development to switch between adding pictures or retrieving
+ * cartesian coordinates for future billboards. It is probably dependent on the global variable `devAddPictures`
+ * set in the main exectuin block and passed through the {@link cesiumSetup} function.
+ *
+ * This method sets the variable `callable` to a function that can be called to trigger the hover effect on the toolbar buttons.
+ * The reference of which is used in {@link moveCesiumFigure} to trigger the hover effect on the track map button if its
+ * out of view.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Ensures that the billboards are initialized after the CesiumJS viewer is set up.
+ *
+ * The result is used to:
+ * - Display billboards on the CesiumJS viewer at specified positions.
+ * - Enable interaction with the billboards to change slides in the gallery.
+ */
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
     const billboards = [];
 
@@ -621,7 +779,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     });
 
     // Inner function declaration
-    callable = function () {
+    callable = function () { //why twice TODO
         //console.log('callable');
         callable = function () { //this seems like an absolute terrible solution, but it kind of works
             // console.log('callable');
@@ -638,7 +796,12 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
 
 }
 
-
+/**
+ * @deprecated probably, honestly have no idea what this was supposed to do and it isnt referenced anywhere anymore
+ * TODO
+ * @param map containing some value (perhaps the image name) and value containing the cartesian coordinates, which are then
+ * used to place ellipsoids on the map
+ */
 function initializePlane(map) {
     map.forEach((value, key) => {
         console.log('Key:', key, 'Value:', value);
@@ -663,6 +826,24 @@ function initializePlane(map) {
     viewer.zoomTo(viewer.entities);
 }
 
+/**
+ * Writes the provided text to the clipboard.
+ *
+ * This function attempts to write the given text to the clipboard using the Clipboard API. If the operation is successful,
+ * a message is logged to the console indicating that the text was copied. If the operation fails, an error message is logged.
+ *
+ * @param {string} text - The text to be copied to the clipboard.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Copies the sorted map data to the clipboard after sorting the map keys.
+ * And from {@link cesiumSetup} when adding pictures to the map, the selected cartesian coordinates are copied to the clipboard
+ *
+ * The result is used to:
+ * - Provide the sorted map data for further use like python scripts in which i use it to map the images to the coordinates
+ * or used it to parse the html divs and the lookuptable
+ *
+ * @returns {Promise<void>} A promise that resolves when the text has been successfully written to the clipboard. cant remember why i did this :D
+ */
 async function writeToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
@@ -671,7 +852,26 @@ async function writeToClipboard(text) {
         console.error('Failed to copy text: ', err);
     }
 }
-
+/**
+ * Finds the nearest points in a Cartesian array relative to a given position (which is retrieved from the click event)
+ * when selecting a point on the map for billboard placement.
+ *
+ * This function iterates over the provided positions to find the nearest point to the click position.
+ * It then returns the nearest point along with (hopefully) its immediate left and right neighbors in the array.
+ *
+ * @param {Array<Cesium.Cartesian3>} positions - The array of Cartesian points to search within, most likely the polyline segment
+ * @param {Cesium.Cartesian3} clickPosition - The position to find the nearest point to.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} in case the `devAddPictures` flag is set, where the result is passed to {@link findNearestPointOnSegments} for further calculations.
+ * - {@link getNumPreviousPoints} - Uses this function to retrieve the middle point at index 1 of the returned array,
+ *          to figure out the number of previous points in the Cartesian array.
+ *
+ * The result is used to:
+ * - Determine the nearest points for various calculations and visualizations in the CesiumJS viewer.
+ *
+ * @returns {Array<Cesium.Cartesian3>} An array containing the 3 closest points which hopefully are the left neighbor, nearest point, and right neighbor.
+ */
 function returnNearestPoints(positions, clickPosition) {
     let nearestPoint = null;
     let minDistance = Number.MAX_VALUE;
@@ -688,14 +888,16 @@ function returnNearestPoints(positions, clickPosition) {
 
     // problem, if the point to the left and the point two to the left are closer together than the point to the left and the point to the right,
     // a pair not surrounding the clicked coordinate is returned, solution:
-    // return all three 😇👍
+    // return all three 😇👍 (in extreme cases the problem persists)
 
     // if(Cesium.Cartesian3.distance(left, clickPosition) < Cesium.Cartesian3.distance(right, clickPosition)) {
     //     return [left, nearestPoint];
     // }
     return [left, nearestPoint, right];
 }
-
+/**
+ * @deprecated This function is deprecated in favor of {@link findNearestPointOnSegments}, which uses projection-based calculations for greater accuracy.
+ */
 function approximateNearestMidpoint(positions, clickPosition) {
     //deprecated using vector arithmetic instead
     const [left, nearestPoint, right] = positions;
@@ -745,7 +947,9 @@ function approximateNearestMidpoint(positions, clickPosition) {
     //were to increase again
 }
 
-
+/**
+ * @deprecated This function was once used to visualize a selection of points in various calculations
+ */
 function visualizeSelection(positions, cartesian) {
 
 
@@ -811,7 +1015,28 @@ function visualizeSelection(positions, cartesian) {
     return [nearestPoint, right];
 }
 
-
+/**
+ * Finds the nearest point on the segments defined by three points relative to a given point.
+ *
+ * This function calculates the nearest point on the segments [a, b] and [b, c] to the given point using projection and
+ * then selects the closer one, while making sure to clamp the result to the segment. `t = Math.max(0, Math.min(1, t));`
+ *
+ * @param {Array<Cesium.Cartesian3>} points - An array containing three Cartesian points [a, b, c].
+ * @param {Cesium.Cartesian3} point - The point to find the nearest point to.
+ *
+ * This method is called from:
+ * - {@link returnNearestPoints} - Uses this function to find the nearest points on segments for further calculations.
+ *
+ * The result is used to:
+ * - Determine the nearest points for various calculations and visualizations in the CesiumJS viewer.
+ *
+ * This method was chosen over the deprecated {@link approximateNearestMidpoint} because it provides a more accurate
+ * calculation of the nearest point using vector arithmetic. The deprecated method relied on distance comparisons
+ * which could lead to incorrect results in certain cases.
+ *
+ * @returns {Cesium.Cartesian3} The nearest point on the segments to the given point.
+ * Thanks copilot for the jsdoc comment :D
+ */
 function findNearestPointOnSegments(points, point) {
     const [a, b, c] = points;
 
@@ -850,7 +1075,22 @@ function findNearestPointOnSegments(points, point) {
     }
 }
 
-
+/**
+ * Initializes a 3D map pin model on the CesiumJS viewer at the specified initial position.
+ *
+ * This function adds a 3D model of a map pin to the CesiumJS viewer at the given initial position.
+ * The model is animated and clamped to the ground. The viewer's clock is set to animate the model
+ * with a slower multiplier to smooth out the animation.
+ *
+ * @param {Cesium.Viewer} viewer - The CesiumJS viewer instance where the map pin will be added.
+ * @param {Cesium.Cartesian3} initialPosition - The initial position of the map pin in Cartesian coordinates.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Initializes the map pin after setting up the CesiumJS viewer. The return value is then stored
+ * in the global variable `mapPin`.
+ *
+ * @returns {Cesium.Entity} The created map pin entity.
+ */
 function initializePin(viewer, initialPosition) {
 
     const mapPin = viewer.entities.add({
@@ -871,6 +1111,25 @@ function initializePin(viewer, initialPosition) {
     return mapPin;
 }
 
+
+/**
+ * Moves the CesiumJS map pin to the position corresponding to the given index in the name-coordinate mapping, defined in the global variable `name_coordinate_mapping`. //TODO
+ *
+ * This function updates the position of the global `mapPin` entity to the coordinates associated with the specified index
+ * in the `name_coordinate_mapping`. It also checks if the map pin is within the current view and triggers a hover effect
+ * on the toolbar buttons if the pin is out of view and not being tracked, using the globally defined `callable` function,
+ * which is set in {@link initializeBillboards}.
+ *
+ * @param {number} index - The index of the position in the `name_coordinate_mapping` to move the map pin to.
+ *
+ *
+ * This method is called from:
+ * - {@link changeSlide} - Does not directly call this function, but indirectly through the slide change callback in the
+ * LightGallery instance defined here:
+ * - {@link initializeGallery} Contains a callback the map pin position when the slide in the LightGallery instance changes.
+ *
+ * @see {@link initializeBillboards} - Sets up the `callable` function used to trigger the hover effect on the toolbar buttons.
+ */
 function moveCesiumFigure(index) {
     //print(map.values[index].position);
     //mapPin.position = Cesium.Cartesian3.fromElements(10,10,10);
@@ -881,7 +1140,7 @@ function moveCesiumFigure(index) {
         return;
     }
 
-    const mapArray = Array.from(name_coordinate_mapping.entries());
+    const mapArray = Array.from(name_coordinate_mapping.entries()); //TODO replace this with name_order_mapping
     if (index >= 0 && index < mapArray.length) {
         const [key, value] = mapArray[index];
         //console.log('Key:', key, 'Value:', value);
@@ -897,6 +1156,17 @@ function moveCesiumFigure(index) {
 
 }
 
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isPositionInView(position) {
 
     const globeBoundingSphere = new Cesium.BoundingSphere(
@@ -910,7 +1180,17 @@ function isPositionInView(position) {
 
     return occluder.isPointVisible(position);
 }
-
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isEntityInRect(entity) {
     const position = entity.position.getValue(Cesium.JulianDate.now());
     const cartographic = Cesium.Cartographic.fromCartesian(position);
@@ -919,7 +1199,17 @@ function isEntityInRect(entity) {
     return Cesium.Rectangle.contains(viewRectangle, cartographic);
 
 }
-
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isEntityInView(entity) {
     const camera = viewer.camera;
     const frustum = camera.frustum;
@@ -943,7 +1233,9 @@ function isEntityInView(entity) {
 
 }
 
-
+//The following functions were used rigth in the beginning when trying to implement my own version of cesiums
+//entity tracked functionality. this was because the cesium tracked entity callback will reset the cams pitch angle and zoom
+// and also moved on every position change, all of which i didnt want. i eventually plan to reimplement this functionality
 function ensureEntityVisible_camreset(entity) {
     const position = entity.position.getValue(Cesium.JulianDate.now());
     const cartographic = Cesium.Cartographic.fromCartesian(position);
@@ -1080,20 +1372,6 @@ function pickRay(viewer) {
     }
 }
 
-// Add Cesium OSM Buildings, a global 3D buildings layer.
-Cesium.createOsmBuildingsAsync().then(buildingTileset => {
-    viewer.scene.primitives.add(buildingTileset);
-});
-
-
-viewer.camera.changed.addEventListener(() => {
-    //updateRedBoxPosition();
-});
-
-
-window.onload = () => {
-    //changeBackpackPositionOverTime();
-};
 
 
 //-------------------Chart.js-------------------
