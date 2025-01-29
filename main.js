@@ -54,7 +54,7 @@ loadImages(name_order_mapping);
 
 document.addEventListener('DOMContentLoaded', initializeGallery());
 document.addEventListener('DOMContentLoaded', domContentLoadedCallback);
-console.log('dom content loaded callback pushed');
+
 // -- CesiumJS --
 try {
     cesiumSetup();//inner async loadReferenceTables() call
@@ -254,7 +254,6 @@ function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery
  * @see moveCesiumFigure - Function to move the Cesium figure based on the current slide index.
  */
 function initializeGallery() {
-    console.log('Initializing LightGallery scheduled');
     loadDivsPromise.then(() => {
         console.log('promise resolved');
         const gallery = document.getElementById('lightgallery');
@@ -315,7 +314,6 @@ function initializeGallery() {
  * @see {@link initializeBillboards} - places a click event on the CesiumJS billboards to call this function.
  */
 function changeSlide(index) {
-    console.log('Attempting to change to slide:', index);
     //gallery_instance.goToSlide(index); ??
     if (gallery_instance) {
         if (true) {
@@ -361,7 +359,7 @@ function changeSlide(index) {
  * access those. Billboard click events would subsqeuntly be ignored
  *
  * This method is called from the main execution block of the application to set up the CesiumJS viewer and asynchronously load the dependent data.
- * It ensures that the viewer is properly configured and that the GeoJSON data sources are loaded and displayed. //TODO add try catch and switch to fallback mode if cesium fails
+ * It ensures that the viewer is properly configured and that the GeoJSON data sources are loaded and displayed.
  *
  * @see {@link initializeBillboards} - This function is called to initialize the billboards after the GeoJSON data sources are loaded.
  */
@@ -494,7 +492,7 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
 
     if (shouldSort) {
 
-        console.log('Sorting map by keys');
+        console.log('Sorting map by keys'); //wont get triggered in prod
         name_coordinate_mapping.forEach((value, key) => {
             //console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key +'\n'+ value);
         });
@@ -503,7 +501,7 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
         name_coordinate_mapping = sortMapByKeys(name_coordinate_mapping, sortedKeys);
         let mapString = '';
         name_coordinate_mapping.forEach((value, key) => {
-            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);
+            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);//wont get triggered in prod
 
             mapString += `${key};${value}\n`;
         });
@@ -577,7 +575,7 @@ async function getPolyLines(flat = true) {
  * @returns {Map} A new map with keys sorted based on the number of previous points in the Cartesian array.
  */
 function sortMapKeys(map, viewer, cartArray) {
-    console.log('Sorting map by keys');
+    console.log('Sorting map by keys'); //wont get triggered in prod
     const sortedMap = new Map();
 
     map.forEach((value, key) => {
@@ -640,7 +638,7 @@ function getNumPreviousPoints(pos, cartesianArray) {
  * functionality replaced by async {@link getPolyLines}
  * */
 function getPolylinesAsCartesianArrays(viewer, fuse = false) {
-    console.log('Getting polylines as cartesian arrays');
+    console.log('Getting polylines as cartesian arrays'); //wont get triggered in prod
     const polylines = [];
 
     viewer.entities.values.forEach(entity => {
@@ -683,7 +681,7 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
  * - Enable interaction with the billboards to change slides in the gallery.
  */
 function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
-    throw new Error('This function is deprecated, use the new version instead');
+    //throw new Error('Test fallback mode');
     const billboards = [];
 
     map.forEach((value, key) => {
@@ -708,13 +706,12 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
             if (addClickEvent) {
                 entity.billboard.id = key; // store the key in the billboard id for reference, is there a better way?
                 viewer.screenSpaceEventHandler.setInputAction(function (click) {
-                    console.log('Clicked on entity:');
                     const pickedObject = viewer.scene.pick(click.position);
                     if (Cesium.defined(pickedObject) && billboards.includes(pickedObject.id)) {
                         const index = Array.from(map.keys()).indexOf(pickedObject.id);
                         const selfIndex = billboards.indexOf(pickedObject.id);
-                        console.log('Clicked on entity:', pickedObject.id, ' at index:', index, 'selfIndex:', selfIndex);
-                        changeSlide(billboards.indexOf(pickedObject.id));
+                        // console.log('Clicked on entity:', pickedObject.id, ' at index:', index, 'selfIndex:', selfIndex);
+                        // changeSlide(billboards.indexOf(pickedObject.id));
                     }
                 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
             }
@@ -794,9 +791,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         }
     });
 
-    // Inner function declaration
-    callable = function () { //why twice TODO
-        //console.log('callable');
         callable = function () { //this seems like an absolute terrible solution, but it kind of works
             // console.log('callable');
             for (let i = 0; i < 5; i++) { //implement css animation instead
@@ -805,7 +799,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
                 }, i * 700); // why do i have to do it this way?
             }
         }
-    }
 
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
@@ -820,7 +813,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
  */
 function initializePlane(map) {
     map.forEach((value, key) => {
-        console.log('Key:', key, 'Value:', value);
+        console.log('Key:', key, 'Value:', value);//wont get triggered in prod
 
         if (value.x && value.y && value.z) {
             viewer.entities.add({
@@ -863,7 +856,7 @@ function initializePlane(map) {
 async function writeToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
-        console.log(text, ' copied to clipboard');
+        console.log(text, ' copied to clipboard'); //wont get triggered in prod
     } catch (err) {
         console.error('Failed to copy text: ', err);
     }
@@ -926,7 +919,6 @@ function approximateNearestMidpoint(positions, clickPosition) {
     const leftRelative = leftToPoint / leftToCenter;
     const rightRelative = rightToPoint / rightToCenter;
     if (leftRelative < rightRelative) {
-        console.log('Left is closer');
         const blackBox = viewer.entities.add({
             position: left,
             box: {
@@ -942,7 +934,6 @@ function approximateNearestMidpoint(positions, clickPosition) {
         }, 2000);
         return [left, nearestPoint];
     }
-    console.log('Right is closer');
 
     const blackBox = viewer.entities.add({
         position: right,
@@ -1164,7 +1155,7 @@ function moveCesiumFigure(index) {
     } else {
         console.warn('Index out of bounds:', index);
     }
-    console.log('Is visible:', isEntityInRect(mapPin));
+//    console.log('Is visible:', isEntityInRect(mapPin));
 
     if (!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
         callable();
@@ -1242,7 +1233,7 @@ function isEntityInView(entity) {
 // Check if the entity is visible in the screen.
     const intersection = cullingVolume.computeVisibility(boundingSphere);
 
-    console.log(intersection);
+    console.log(intersection);//wont get triggered in prod
 //  1: Cesium.Intersect.INSIDE
 //  0: Cesium.Intersect.INTERSECTING
 // -1: Cesium.Intersect.OUTSIDE
@@ -1297,7 +1288,7 @@ async function updateRedBoxPosition() {
     //await new Promise(resolve => setTimeout(resolve, 2000));
     const {offsetX, offsetY} = raycastOffset(viewer);
     const absoluteCartesian3 = pickRay(viewer.camera);
-    console.log('Absolute cartesian3: ', absoluteCartesian3);
+    console.log('Absolute cartesian3: ', absoluteCartesian3);//wont get triggered in prod
     const newPosition = Cesium.Cartesian3.fromElements(
         viewer.camera.position.x + offsetX,
         viewer.camera.position.y + offsetY,
@@ -1309,14 +1300,14 @@ async function updateRedBoxPosition() {
 function createCamCenteredBox_deprecated() {
     const {offsetX, offsetY} = calcOffset(viewer.camera);
 
-    console.log('Creating box at: ', viewer.camera.position.x + offsetX, viewer.camera.position.y + offsetY, viewer.camera.position.z);
-    console.log('Camera position: ', viewer.camera.position.x, viewer.camera.position.y, viewer.camera.position.z);
-    console.log('\n');
+    console.log('Creating box at: ', viewer.camera.position.x + offsetX, viewer.camera.position.y + offsetY, viewer.camera.position.z);//wont get triggered in prod
+    console.log('Camera position: ', viewer.camera.position.x, viewer.camera.position.y, viewer.camera.position.z);//wont get triggered in prod
+    console.log('\n');//wont get triggered in prod
     //abort if the offset is too high or the resulting coordinate is nan
     if (isNaN(viewer.camera.position.x + offsetX) || isNaN(viewer.camera.position.y + offsetY)) {
         const error = new Error();
         const stack = error.stack.split('\n')[1].trim();
-        console.warn(`Offset is too high, aborting. [${stack}]`);
+        console.warn(`Offset is too high, aborting. [${stack}]`);//wont get triggered in prod
         return;
     }
     const redBox = viewer.entities.add({
@@ -1372,7 +1363,7 @@ function raycastOffset(viewer) {
 
 function pickRay(viewer) {
     const scene = viewer.scene;
-    console.log('Scene: ', scene);
+    console.log('Scene: ', scene);//wont get triggered in prod
     const windowPosition = new Cesium.Cartesian2(viewer.container.clientWidth / 2, viewer.container.clientHeight / 2);
     const pickRay = scene.camera.getPickRay(windowPosition);
     const pickPosition = scene.globe.pick(pickRay, scene);
