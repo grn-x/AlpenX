@@ -1,25 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('popup-overlay');
-    const closeBtn = document.querySelector('.close-btn');
+    const openButton = document.getElementById('openPopup');
+    const closeButton = document.getElementById('closePopup');
+    const overlay = document.getElementById('overlay');
 
-    setTimeout(() => {
-        overlay.classList.add('active');
-    }, 1000);
+    openButton.addEventListener('click', () => {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
 
-    closeBtn.addEventListener('click', () => {
-        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
     });
+
+    const closePopup = () => {
+        overlay.style.opacity = '0';
+        document.body.style.overflow = 'auto';
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+    };
+
+    closeButton.addEventListener('click', closePopup);
 
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
-            overlay.classList.remove('active');
+            closePopup();
         }
     });
 
-    const hasSeenPopup = localStorage.getItem('hasSeenWelcomePopup');
-
-    if (!hasSeenPopup) {
-        overlay.classList.add('active');
-        localStorage.setItem('hasSeenWelcomePopup', 'true');
-    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closePopup();
+        }
+    });
 });

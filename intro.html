@@ -1,42 +1,49 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AlpenX Revisited</title>
-    <link rel="stylesheet" href="intro.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Demo</title>
+  <link rel="stylesheet" href="intro.css">
 </head>
 <body>
-<div id="popup-overlay" class="overlay">
-    <div class="popup">
-        <div class="popup-header">
-            <h2>AlpenX Revisited</h2>
-            <button class="close-btn">&times;</button>
+<button id="openPopup">Open Popup</button>
+<div id="overlay" class="overlay">
+  <div class="popup">
+    <div class="popup-content">
+      <h2>Alpencross Revisited</h2>
+      <p class="description">
+        Um die Erlebnisse unserer Alpencross-Tour zu sammeln und nocheinmal nacherleben zu können, habe ich über die letzten Monate diese Website geschrieben.
+        <br><br>
+        Einige Aufnahmen habe ich selber geschossen, aber ohne die vielen Zusendungen von euch, hätten ich die Route niemals so schön füllen können.
+        <br>
+        Vielen Dank also an Alexander, Finn, Helena, Jaro, Lukas, Toni, Vijolind und Vincent für das Bereitstellen der Bilder!
+        <br><br>
+        Bei Bug-Reports oder ganz generell für Feedback könnt ihr ein <a href="https://github.com/grn-x/AlpenX/issues">Github-Issue</a>
+        erstellen oder mich auch sehr gerne direkt <a href="mailto:grnx.git@gmail.com?subject=AlpenX-Revisited Feedback Bug-Report">kontaktieren</a>.
+        <br><br><br>
+      </p>
+      <div class="image-container">
+        <div class="left-column">
+          <div class="image-wrapper">
+            <img src="/geodata/imgsource/resize.svg" alt="Nature Scene" class="popup-image">
+            <p class="caption">Für eine angenehme Nutzung ist ein möglichst großer Bildschirm empfohlen</p>
+          </div>
+          <div class="image-wrapper">
+            <img src="/geodata/imgsource/mouse.svg" alt="Urban Scene" class="popup-image">
+            <p class="caption">Das Navigieren der 3D-Karte funktioniert mit einer phyischen Maus am besten</p>
+          </div>
         </div>
-        <div class="popup-content">
-            <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua</p>
-            <p>At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua</p>
-
-            <div class="image-container">
-                <div class="image-wrapper">
-                    <div class="aspect-ratio-box">
-                        <img src="/geodata/imgsource/resize_1.svg" alt="Feature 1" class="popup-image">
-                    </div>
-                    <p class="image-caption">Big Screensize recommended</p>
-                </div>
-                <div class="image-wrapper">
-                    <div class="aspect-ratio-box">
-                        <img src="/geodata/imgsource/resize_2.svg" alt="Feature 2" class="popup-image">
-                    </div>
-                    <p class="image-caption">Use a mouse to effectively navigate</p>
-                </div>
-                <div class="image-wrapper">
-                    <div class="aspect-ratio-box">
-                        <img src="/geodata/imgsource/animation.gif" alt="Loading animation" class="popup-gif">
-                    </div>
-                    <p class="image-caption">Demo</p>
-                </div>
-            </div>
+        <div class="right-column">
+          <div class="image-wrapper gif-wrapper">
+            <img src="/geodata/imgsource/animation.gif" alt="Animation" class="popup-image gif">
+            <p class="caption">Überblick einiger Funktionen</p>
+          </div>
         </div>
+      </div>
+      <button id="closePopup" class="close-button">×</button>
     </div>
+  </div>
 </div>
 <script src="intro.js"></script>
 </body>
