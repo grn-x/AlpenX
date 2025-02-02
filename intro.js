@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let resizeTimeout; //TODO fix resizing
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(centerImagesWithCaptions, 100);
+        //clearTimeout(resizeTimeout);
+        //resizeTimeout = setTimeout(centerImagesWithCaptions, 100);
     });
 
     const closePopup = () => {
