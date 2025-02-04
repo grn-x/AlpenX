@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const applyStyles = () => {
+    const applyStyles = (setInitialPopupSize = true) => {
 
-        if(initialPopupSize === -1){
+        if(initialPopupSize === -1 && setInitialPopupSize){
             initialPopupSize = window.innerWidth;
         }
 
@@ -75,8 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // is wait really necessary?
         setTimeout(() => {
             overlay.style.opacity = '1';
+            if(innerCalcCaptionHeight())applyStyles(); //this will set ``initialPopupSize`` to a wrong value
             centerImagesWithCaptions();
-        }, 10);
+
+        }, 100);
     });
     const innerCalcCaptionHeight = () => {
         /*const imageWrappers = document.querySelectorAll('.image-wrapper');
@@ -127,13 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(innerCalcCaptionHeight())applyStyles();
             }
             removeStyles();
-            console.log('remove styles');
-            console.log('window.innterWidth: ', window.innerWidth);
-            console.log('initialPopupSize', initialPopupSize);
         } else if (innerCalcCaptionHeight()) {
             applyStyles();
         }
-
+        //somewhen reset intialPopupSize back to -1 because initialPopupsize
 
     });
 
