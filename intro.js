@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const applyStyles = (setInitialPopupSize = true) => {
+    const applyStyles = () => {
 
-        if(initialPopupSize === -1 && setInitialPopupSize){
+        if(initialPopupSize === -1){
             initialPopupSize = window.innerWidth;
         }
 
@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // is wait really necessary?
         setTimeout(() => {
             overlay.style.opacity = '1';
+            centerImagesWithCaptions();
             if(innerCalcCaptionHeight())applyStyles(); //this will set ``initialPopupSize`` to a wrong value
             centerImagesWithCaptions();
 
