@@ -143,3 +143,10 @@ h2 {
 }
 /* bad practice replacing the media query with custom more complex js code,
 but a working rescaling requires it */
+@media (max-aspect-ratio: 5/4) {
+    .popup {
+        aspect-ratio: auto;
+        max-width: 90%;
+        max-height: 90%;
+    }
+}
