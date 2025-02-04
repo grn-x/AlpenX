@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const openButton = document.getElementById('openPopup');
     const closeButton = document.getElementById('closePopup');
     const overlay = document.getElementById('overlay');
+    let initialPopupSize = -1; //this will be replaced by the current screensize the first time,
+    // the resize event is triggered using this information we can determine when to scale up again.
 
     const centerImagesWithCaptions = () => {
         const imageWrappers = document.querySelectorAll('.image-wrapper');
@@ -28,6 +30,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const applyStyles = () => {
+
+        if(initialPopupSize === -1){
+            initialPopupSize = window.innerWidth;
+        }
+
+        const imageContainer = document.querySelector('.image-container');
+        const popup = document.querySelector('.popup');
+
+        /*console.log('before: ');
+        console.log(imageContainer.style.flexDirection);
+        console.log(imageContainer.style.maxWidth);
+        console.log(imageContainer.style.margin);
+        console.log(popup.style.overflowY);
+        console.log('Done');*/ //are ''
+
+        if (imageContainer && popup) {
+            imageContainer.style.flexDirection = 'column';
+            imageContainer.style.maxWidth = '80%';
+            imageContainer.style.margin = '0 auto';
+
+            popup.style.overflowY = 'auto';
+        }
+    };
+
+    const removeStyles = () => {
+        const imageContainer = document.querySelector('.image-container');
+        const popup = document.querySelector('.popup');
+
+        if (imageContainer && popup) {
+            imageContainer.style.flexDirection = '';
+            imageContainer.style.maxWidth = '';
+            imageContainer.style.margin = '';
+
+            popup.style.overflowY = '';
+        }
+    };
+
     openButton.addEventListener('click', () => {
         overlay.style.display = 'block';
         document.body.style.overflow = 'hidden';
@@ -38,12 +78,66 @@ document.addEventListener('DOMContentLoaded', () => {
             centerImagesWithCaptions();
         }, 10);
     });
+    const innerCalcCaptionHeight = () => {
+        /*const imageWrappers = document.querySelectorAll('.image-wrapper');
+        imageWrappers.forEach(wrapper => { //wtf you dont support premature return statements??
+            const image = wrapper.querySelector('.popup-image');
+            const caption = wrapper.querySelector('.caption');
+            const wrapperHeight = wrapper.offsetHeight;
+            const captionHeight = caption.offsetHeight;
+            const halfWrapperHeight = wrapperHeight / 2;
+            const halfWrapperHeightMinusCaption = halfWrapperHeight - captionHeight;
+            if (halfWrapperHeightMinusCaption < 0 || image.offsetHeight > (wrapperHeight - captionHeight)) {
+                console.log('downscale');
+                return true;
+            }
+            //downscale
+            //caption.style.fontSize = '0.8em';
+        });
+        return false;*/
+
+        const imageWrappers = document.querySelectorAll('.image-wrapper');
+        return Array.from(imageWrappers).some(wrapper => {
+            const image = wrapper.querySelector('.popup-image');
+            const caption = wrapper.querySelector('.caption');
+            const wrapperHeight = wrapper.offsetHeight;
+            const captionHeight = caption.offsetHeight;
+            const halfWrapperHeight = wrapperHeight / 2;
+            const halfWrapperHeightMinusCaption = halfWrapperHeight - captionHeight;
+            if (halfWrapperHeightMinusCaption < 0 || image.offsetHeight > (wrapperHeight - captionHeight)) {
+                return true;
+            }
+            return false;
+        });
+    };
 
     let resizeTimeout; //TODO fix resizing
     window.addEventListener('resize', () => {
-        //clearTimeout(resizeTimeout);
-        //resizeTimeout = setTimeout(centerImagesWithCaptions, 100);
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(centerImagesWithCaptions, 0);
+        //implement the css media query here because if fucking hate what
+        //this layout garbage ive created has become
+        // if caption height is greater than 1/2*(wrapperheight-captionheight)
+        // downscale
+
+        //if (window.innerWidth > (initialPopupSize === -1 ? (innerCalcCaptionHeight() && -1) : initialPopupSize)) {
+        if(window.innerWidth > initialPopupSize){
+            if(initialPopupSize === -1){
+                //initialPopupSize = window.innerWidth;
+                if(innerCalcCaptionHeight())applyStyles();
+            }
+            removeStyles();
+            console.log('remove styles');
+            console.log('window.innterWidth: ', window.innerWidth);
+            console.log('initialPopupSize', initialPopupSize);
+        } else if (innerCalcCaptionHeight()) {
+            applyStyles();
+        }
+
+
     });
+
+
 
     const closePopup = () => {
         overlay.style.opacity = '0';

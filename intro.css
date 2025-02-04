@@ -134,16 +134,5 @@ h2 {
     /*background-color: #ffffff;*/
     color: #000000;
 }
-@media (max-width: 1200px) { /* rather than using this maybe calculate the width of the caption vs the wrapper */
-    .image-container {
-        flex-direction: column;
-    max-width: 90vw;
-    aspect-ratio: 16/9;
-    margin: 0 auto;
-}
-
-.popup {
-    overflow-y: auto;
-}
-
-}
+/* bad practice replacing the media query with custom more complex js code,
+but a working rescaling requires it */
