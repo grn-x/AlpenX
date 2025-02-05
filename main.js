@@ -6,30 +6,127 @@
 // - column overlapping masonry layout?
 // - fix masonry picture ordering manually?
 // - refractor and clean up this mess of a code
-// - images to fix:
-//      - https://grn-x.github.io/AlpenX/#lg=1&slide=107
-//      - https://grn-x.github.io/AlpenX/#lg=1&slide=100
 
 
+//------------------- ##START## Entry Point / Main Execution Block -------------------
+
+import { modalSystem } from './intro.js';
+let cleanup;
+if (cleanup) cleanup();
+cleanup = await modalSystem.openDialog(); //await to ensure the popup is visible before the buggy loading
+
+
+
+let innterHTMLcontent = ''; //else this creates an undefined element in the document
+let gallery_instance;
+let loadDivsPromiseResolve;
+const loadDivsPromise = new Promise((resolve) => {
+    loadDivsPromiseResolve = resolve;
+});
+
+let name_coordinate_mapping;
+let name_order_mapping;
+let viewer;
+const polylines = [];
+const promises = [];
+let initialPromiseResolve;
+let mapPin;
+let callable;
+
+const shouldSort = false;       //used to be global variables, though through adding identical parameters
+const devAddPictures = false;   //to the affected functions, they are scoped and overriden anyways
+let isFallbackLoaded = false;
+
+
+let mapButton;
+function domContentLoadedCallback() {
+    mapButton = document.createElement('button');
+    mapButton.textContent = 'Switch to Static Map';
+    mapButton.style.position = 'absolute';
+    mapButton.style.top = '10px';
+    mapButton.style.left = '10px';
+    document.body.appendChild(mapButton);
+
+    mapButton.addEventListener('click', () => {
+        toggleFallbackContent(mapButton);
+    });
+}
+const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
+[name_coordinate_mapping, name_order_mapping] = await loadReferenceTables(referenceTablePath); //.then
+
+loadImages(name_order_mapping);
+
+
+// -- LightGallery --
+
+document.addEventListener('DOMContentLoaded', initializeGallery());
+document.addEventListener('DOMContentLoaded', domContentLoadedCallback());
+// -- CesiumJS --
+try {
+    cesiumSetup();//inner async loadReferenceTables() call
+}catch (e) {
+    console.error('The Cesium Setup method returned an error, switching to fallback mode');
+    alert('The Cesium Setup method returned an error, switching to fallback mode\n' + e);
+    toggleFallbackContent(mapButton);
+}
+// -- ChartJS --
+initializeChart(); // async function, because it relies on await getPolyLines() to get height profile for chart data
+
+
+// Add Cesium OSM Buildings, a global 3D buildings layer.
+Cesium.createOsmBuildingsAsync().then(buildingTileset => {
+    viewer.scene.primitives.add(buildingTileset);
+});
+
+/*
+viewer.camera.changed.addEventListener(() => {
+    //updateRedBoxPosition();
+});
+
+
+window.onload = () => {
+    //changeBackpackPositionOverTime();
+};*/
+
+//------------------- ##END## Entry Point / Main Execution Block -------------------
+
+
+function loadReferenceTables(referenceTablePath) {
+    let name_coordinate_map = new Map();
+    let name_index_map = new Map(); //this could be passed to the sort function before adding the billboards
+                            // and instantiating the lightgallery, but its more efficient to have the lookup table preordered
+    return fetch(referenceTablePath)
+        .then(response => response.text())
+        .then(text => {
+            let counter = 0;
+            const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
+            for (const line of lines) {
+                if (line.startsWith('//')) continue;
+                const [key, valueString, altText] = line.split(';');
+                if (valueString) {
+                    const [x, y, z] = valueString.split(' ').map(parseFloat);
+                    const value = new Cesium.Cartesian3(x, y, z);
+                    name_coordinate_map.set(key, value);
+                    name_index_map.set(key, counter++);
+                    constructHTMLdivs(key, valueString, altText);
+                } else {
+                    console.warn('Invalid line format:', line);
+                }
+            }
+            loadHTMLdivs(); // async function, because it relies on await loadReferenceTables(), thus making use of the load
+
+
+            return [name_coordinate_map, name_index_map];
+        });
+}
 
 
 //----------- Masonry Layout Overview -----------
-async function loadImages() {
-    const response = await fetch('geodata/imgsource/final_sorted.txt');
-    const text = await response.text();
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+/** Load images into the masonry layout, the images are sorted by the order they appear in the reference table in
+ * @param map a map that doesnt associate the image name with the location or author but rather the index assuming correct order*/
+function loadImages(map) {
 
-    const imageMap = new Map();
-    lines.forEach((line, index) => {
-        const [filename] = line.split(';');
-        if (!imageMap.has(filename)) {
-            imageMap.set(filename, index);
-        }
-    });
-
-
-
-    const images = [
+    const masonry_images = [
         ['20240707_101042000_iOS 2.jpg', 'Tag 0 <br> Bahnhof Bamberg'],
         ['20240707_191117000_iOS.jpg', 'Tag 0 <br> Jugendherberge Oberstdorf-Kornau'],
         ['20240708_082738-Benedikt.jpg', 'Tag 1 <br> Start Spielmannsau'],
@@ -61,15 +158,10 @@ async function loadImages() {
         ['DSC09949.jpg', 'Tag 6 <br> Aufstieg zu Similaun Hütte'],
         ['DSC09973.jpg', 'Tag 6 <br> Ankunft auf der Similaun Hütte'],
         ['DSC09986.jpg', 'Tag 6 <br> Pizza Essen in Meran']
-    ].map(([filename, name]) => [filename, name, imageMap.get(filename) || 0]);
+    ].map(([filename, name]) => [filename, name, map.get(filename) || 0]);
 
-    images.sort((a, b) => a[2] - b[2]);
+    masonry_images.sort((a, b) => a[2] - b[2]);
 
-    /*let stringBuilder;
-    images.forEach(image => {
-        stringBuilder += `['${image[0]}', '${image[1]}'],`;
-    });
-    console.log(stringBuilder);*/
 
     const image_path = 'geodata/imgsource/combined-thumbnail/1024/';
     const row = document.querySelector('.row');
@@ -81,21 +173,21 @@ async function loadImages() {
         colsCollection[`col${i}`].classList.add('column');
     }
 
-    for (let i = 0; i < images.length; i++) {
+    for (let i = 0; i < masonry_images.length; i++) {
         const itemContainer = document.createElement('div');
         itemContainer.classList.add('item');
         const item = document.createElement('img');
-        item.src = `${image_path}${images[i][0]}`;
+        item.src = `${image_path}${masonry_images[i][0]}`;
         itemContainer.appendChild(item);
 
         const hoverText = document.createElement('div');
         hoverText.classList.add('hover-text');
-        hoverText.innerHTML = images[i][1];
+        hoverText.innerHTML = masonry_images[i][1];
         itemContainer.appendChild(hoverText);
 
         itemContainer.addEventListener('click', () => {
             //console.log('Image Name: ', images[i]);
-            changeSlide(images[i][2]);
+            changeSlide(masonry_images[i][2]);
         });
 
         colsCollection[`col${(i % cols) + 1}`].appendChild(itemContainer);
@@ -104,73 +196,29 @@ async function loadImages() {
     Object.values(colsCollection).forEach(column => {
         row.appendChild(column);
     });
-}
 
-loadImages();
-//------------------- Chart.js -------------------
+}
 
 
 //-------------------- LightGallery --------------------
-/*let gallery_instance;
-document.addEventListener('DOMContentLoaded', function() {
 
-    const gallery = document.getElementById('lightgallery');
+/**
+ * Constructs HTML anchor elements with embedded image tags for a gallery and appends them to the global `innterHTMLcontent` string.
+ *
+ * This function is used to create HTML anchor elements that link to full-sized images and contain thumbnail images.
+ * The constructed HTML string is appended to the global `innterHTMLcontent` variable.
+ *
+ * @param {string} filename - The name of the image file.
+ * @param {string} location - The location coordinates of the image.
+ * @param {string} altText - The alternative text for the image.
+ * @param {string} [thumbnailPath='geodata/imgsource/combined-thumbnail'] - The path to the thumbnail images.
+ * @param {string} [imagePath='geodata/imgsource/combined'] - The path to the full-sized images.
+ *
+ * @see {@link loadReferenceTables} - This function calls `constructHTMLdivs` to create HTML elements for each image in the reference table.
+ * <br>
+ * @see {@link loadHTMLdivs} - The resulting HTML string is used by this function to populate the gallery element in the DOM.
+ */
 
-    gallery_instance = lightGallery(gallery, {
-        container: document.getElementById('galleryContainer'),
-        download: false,
-        controls: true,
-        mousewheel: true,
-        preload: 2,
-        resetScrollPosition: false,
-        showMaximizeIcon: true,
-        plugins: [lgZoom, lgThumbnail, lgAutoplay],
-        thumbnail: true,
-        zoom: true,
-        zoomPluginStrings: {
-            zoomIn: 'Zoom in',
-            zoomOut: 'Zoom out',
-            actualSize: 'Actual size'
-        },
-        zoom: {
-            scale: 1.5,
-            zoomFromOrigin: true // Does not seem to work //rtfm
-
-        },
-        autoplay: true,
-        autoplayControls: true,
-        slideShowInterval : 1000,
-        progressBar: true
-    });
-
-    gallery.addEventListener('lgContainerResize', (event) => {
-        console.log('Maximized, changing to index 2 now');
-        changeSlide(1);
-
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-    });
-
-    gallery.addEventListener('lgAfterSlide', (event) => {
-        const { index, prevIndex } = event.detail;
-        console.log('Picture opened at index:', index);
-
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-
-    });
-
-});*/
-
-let gallery_instance;
-
-let loadDivsPromiseResolve;
-
-const loadDivsPromise = new Promise((resolve) => {
-    loadDivsPromiseResolve = resolve;
-});
-
-
-
-let innterHTMLcontent = ''; //else this creates an undefined element in the document
 function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
     const elementString = `
         <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
@@ -181,8 +229,13 @@ function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata
     innterHTMLcontent += elementString;
 }
 
-
-async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
+/** Append the constructed picture divs string into the lightgallery element, this method manages the timing(the dom structure does not exist
+ * upon immediate page load) and ensures through the globally defined promise, that other methods depending on the pictures
+ * (like the lightgallery instantiation) get triggered at the correct time
+ * this is called by {@link loadReferenceTables} because {@link constructHTMLdivs} needs to complete
+ * its cycle beforehand */
+//is async necessary? it shouldnt at least
+function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightgallery')) {
     const addElement = () => {
         galleryHTMLelement.innerHTML = innterHTMLcontent;
         loadDivsPromiseResolve(); // Resolve the promise when loadHTMLdivs is completed
@@ -197,71 +250,81 @@ async function loadHTMLdivs(galleryHTMLelement = document.getElementById('lightg
     }
 }
 
-
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * Initializes the LightGallery instance and sets up event listeners for gallery interactions.
+ *
+ * This function schedules the initialization of LightGallery once the `loadDivsPromise` is resolved.
+ * It configures the gallery with various options such as zoom, autoplay, and thumbnail display.
+ * Event listeners are added to handle gallery resize and slide change events.
+ *
+ * @see loadDivsPromise - The promise that resolves when the HTML divs are loaded.
+ * @see moveCesiumFigure - Function to move the Cesium figure based on the current slide index.
+ */
+function initializeGallery() {
     loadDivsPromise.then(() => {
+        console.log('promise resolved');
+        const gallery = document.getElementById('lightgallery');
 
-    const gallery = document.getElementById('lightgallery');
+        gallery_instance = lightGallery(gallery, {
+            container: document.getElementById('galleryContainer'),
+            download: false,
+            controls: true,
+            mousewheel: true,
+            preload: 2,
+            resetScrollPosition: false,
+            showMaximizeIcon: true,
+            plugins: [lgZoom, lgThumbnail, lgAutoplay, lgHash],
+            thumbnail: true,
+            //zoom: true,
+            zoomPluginStrings: {
+                zoomIn: 'Zoom in',
+                zoomOut: 'Zoom out',
+                actualSize: 'Actual size'
+            },
+            zoom: {
+                enable: true,
+                scale: 1.5,
+                zoomFromOrigin: true // Does not seem to work //rtfm
 
-    gallery_instance = lightGallery(gallery, {
-        container: document.getElementById('galleryContainer'),
-        download: false,
-        controls: true,
-        mousewheel: true,
-        preload: 2,
-        resetScrollPosition: false,
-        showMaximizeIcon: true,
-        plugins: [lgZoom, lgThumbnail, lgAutoplay, lgHash],
-        thumbnail: true,
-        zoom: true,
-        zoomPluginStrings: {
-            zoomIn: 'Zoom in',
-            zoomOut: 'Zoom out',
-            actualSize: 'Actual size'
-        },
-        zoom: {
-            scale: 1.5,
-            zoomFromOrigin: true // Does not seem to work //rtfm
+            },
+            autoplay: true,
+            autoplayControls: true,
+            slideShowInterval: 3000,
+            progressBar: true
+        });
 
-        },
-        autoplay: true,
-        autoplayControls: true,
-        slideShowInterval : 3000,
-        progressBar: true
+        gallery.addEventListener('lgContainerResize', (event) => {
+            //changeSlide(1);
+
+            //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
+        });
+
+        gallery.addEventListener('lgAfterSlide', (event) => {
+            const {index, prevIndex} = event.detail;
+
+
+            moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
+
+        });
     });
 
-    gallery.addEventListener('lgContainerResize', (event) => {
-        //changeSlide(1);
+}
 
-        //moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-    });
-
-    gallery.addEventListener('lgAfterSlide', (event) => {
-        const { index, prevIndex } = event.detail;
-
-       /* //const location = event.detail.instance.getSlideItem(event.detail.index).getAttribute('data-location');
-        console.log('Picture location:', location);
-
-        const slideItem = gallery_instance.getSlideItem(index);
-        console.log('Attributes of the current slide element:', slideItem);
-        for (let attr of slideItem.attributes) {
-            console.log(`item: ${attr.name}: ${attr.value}`);
-        }*/
-
-        moveCesiumFigure(index); //lookup table in between to interpolate between the points and the index?
-
-    });
-    });
-
-});
-
-
-
+/**
+ * Changes the current slide in the LightGallery instance to the specified index.
+ *
+ * This method acts as an interface between the LightGallery instance and
+ * the CesiumJS viewer, and the masonry layout (add graph later).
+ *
+ * @param {number} index - The index of the slide to change to.
+ *
+ * @see {@link loadImages} - places a click event on the masonry layout images to call this function.
+ * @see {@link initializeBillboards} - places a click event on the CesiumJS billboards to call this function.
+ */
 function changeSlide(index) {
-    console.log('Attempting to change to slide:', index);
     //gallery_instance.goToSlide(index); ??
     if (gallery_instance) {
-        if(true){
+        if (true) {
             gallery_instance.openGallery(index);//goToNextSlide(); //goToPreviusSlide(); //closeGallery();
         }
         gallery_instance.slide(index);
@@ -273,93 +336,211 @@ function changeSlide(index) {
 
 //-------------------- CesiumJS --------------------
 
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
-let viewer = new Cesium.Viewer('cesiumContainer', {
-    terrain: Cesium.Terrain.fromWorldTerrain(),
-    homeButton: false,
-    sceneModePicker: false,
-    baseLayerPicker: true,
-    navigationHelpButton: false,
-    animation: false,
-    timeline: false,
-    fullscreenButton: false,
-    vrButton: false,
-    geocoder: true,
-    infoBox: false,
-    selectionIndicator: false,
-});
-viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+//defined global variables:
+//let viewer;
+//let mapPin;
+//let polylines;
+//let callable;
+
+//let viewer
+//const shouldSOrt
+//let map
+//const polylines
+//let initialPromiseResolve
+//let mapPin
+//let callable
+//await because of poylines, which are kinda fucked up with the cesium backend; route adding promises are not awaited
+// -> so the polylines you somehow have to await the promises, to get all polylines, which are also needed here when sorting later on, what a chaos
+
+/**
+ * Sets up the CesiumJS viewer with various configurations and loads GeoJSON data sources for the gpx path.
+ *
+ * This function sets up event listeners for user interactions and
+ * handles the sorting of map keys if necessary/stated and the initialization of billboards.
+ *
+ * @param {boolean} [shouldSort=false] - Indicates whether the map keys should be sorted. This was used in testing,
+ * but is not necessary for the final version, after some refractors, the original system of sorting the map keys,
+ * then printing them, to parse them into a lookuptable is not required anymore
+ * @param {boolean} [devAddPictures=false] - Indicates whether to enable developer mode for adding pictures,
+ * which allows the user to add pictures to the map by clicking on the path. From there, Red cones would be placed to indicate
+ * the selected positon, the cartesian 3 coordinates are automatically copied to the clipboard for the python mapping script to
+ * access those. Billboard click events would subsqeuntly be ignored
+ *
+ * This method is called from the main execution block of the application to set up the CesiumJS viewer and asynchronously load the dependent data.
+ * It ensures that the viewer is properly configured and that the GeoJSON data sources are loaded and displayed.
+ *
+ * @see {@link initializeBillboards} - This function is called to initialize the billboards after the GeoJSON data sources are loaded.
+ */
+async function cesiumSetup(shouldSort = false, devAddPictures = false) {
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZWIyNDVmYS1lZGMwLTRjNzgtOGUwYi05MDI3Y2I5NjhiYjkiLCJpZCI6MjU1Njg5LCJpYXQiOjE3MzE3MTE5NDZ9.fgtGlj3eBn2atRqSMgEKuQTbTtm4Pg3aIpkbyFuAu8o'; // this feels horrible, but i dont have a proxy so there is no solution anyways
+    try {
+        viewer = new Cesium.Viewer('cesiumContainer', {
+        terrain: Cesium.Terrain.fromWorldTerrain(),
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: true,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        vrButton: false,
+        geocoder: true,
+        infoBox: false,
+        selectionIndicator: false,
+    });
+    viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 
 
+    const files = new Map([
+        ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED, 0]],
+        ['geodata/geoJson/Day0-1-WalkToYH.geojson', ['day0', Cesium.Color.CRIMSON, 1]],
+        ['geodata/geoJson/Day1-0-WalkToBus.geojson', ['day1', Cesium.Color.TEAL, 2]],
+        ['geodata/geoJson/Day1-1-BusToStart.geojson', ['day1', Cesium.Color.STEELBLUE, 3]],
+        ['geodata/geoJson/Day1-2-Main.geojson', ['day1', Cesium.Color.TEAL, 4]],
+        ['geodata/geoJson/Day2-0-WalkToBus.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 5]],
+        ['geodata/geoJson/Day2-1-BusToStart.geojson', ['day2', Cesium.Color.MAGENTA, 6]],
+        ['geodata/geoJson/Day2-2-Main.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 7]],
+        ['geodata/geoJson/Day3-0-WalkToBus.geojson', ['day3', Cesium.Color.YELLOW, 8]],
+        ['geodata/geoJson/Day3-1-BusToTrain.geojson', ['day3', Cesium.Color.GOLD, 9]],
+        ['geodata/geoJson/Day3-2-WalkToStore.geojson', ['day3', Cesium.Color.YELLOW, 10]],
+        ['geodata/geoJson/Day3-3-TrainToStart.geojson', ['day3', Cesium.Color.GOLDENROD, 11]],
+        ['geodata/geoJson/Day3-4-Main.geojson', ['day3', Cesium.Color.YELLOW, 12]],
+        ['geodata/geoJson/Day4-0-BusToStore.geojson', ['day4', Cesium.Color.DARKBLUE, 13]],
+        ['geodata/geoJson/Day4-1-WalkToStore.geojson', ['day4', Cesium.Color.INDIGO, 14]],
+        ['geodata/geoJson/Day4-2-BusToStart.geojson', ['day4', Cesium.Color.DARKBLUE, 15]],
+        ['geodata/geoJson/Day4-3-Main.geojson', ['day4', Cesium.Color.INDIGO, 16]],
+        ['geodata/geoJson/Day5-0-WalkToBus.geojson', ['day5', Cesium.Color.DARKGREEN, 17]],
+        ['geodata/geoJson/Day5-1-BusToStart.geojson', ['day5', Cesium.Color.DARKOLIVEGREEN, 18]],
+        ['geodata/geoJson/Day5-2-Main.geojson', ['day5', Cesium.Color.DARKGREEN, 19]],
+        ['geodata/geoJson/Day6-0-Main.geojson', ['day6', Cesium.Color.CRIMSON, 20]],
+        ['geodata/geoJson/Day7-0-BusToMerano.geojson', ['day7', Cesium.Color.MAROON, 21]],
+        ['geodata/geoJson/Day7-1-Pizza.geojson', ['day7', Cesium.Color.FIREBRICK, 22]],
+    ]);
 
-const files = new Map([
-    ['geodata/geoJson/Day0-0-BusToYH.geojson', ['day0', Cesium.Color.DARKRED, 0]],
-    ['geodata/geoJson/Day0-1-WalkToYH.geojson', ['day0', Cesium.Color.CRIMSON, 1]],
-    ['geodata/geoJson/Day1-0-WalkToBus.geojson', ['day1', Cesium.Color.TEAL, 2]],
-    ['geodata/geoJson/Day1-1-BusToStart.geojson', ['day1', Cesium.Color.STEELBLUE, 3]],
-    ['geodata/geoJson/Day1-2-Main.geojson', ['day1', Cesium.Color.TEAL, 4]],
-    ['geodata/geoJson/Day2-0-WalkToBus.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 5]],
-    ['geodata/geoJson/Day2-1-BusToStart.geojson', ['day2', Cesium.Color.MAGENTA, 6]],
-    ['geodata/geoJson/Day2-2-Main.geojson', ['day2', Cesium.Color.MEDIUMORCHID, 7]],
-    ['geodata/geoJson/Day3-0-WalkToBus.geojson', ['day3', Cesium.Color.YELLOW, 8]],
-    ['geodata/geoJson/Day3-1-BusToTrain.geojson', ['day3', Cesium.Color.GOLD, 9]],
-    ['geodata/geoJson/Day3-2-WalkToStore.geojson', ['day3', Cesium.Color.YELLOW, 10]],
-    ['geodata/geoJson/Day3-3-TrainToStart.geojson', ['day3', Cesium.Color.GOLDENROD, 11]],
-    ['geodata/geoJson/Day3-4-Main.geojson', ['day3', Cesium.Color.YELLOW, 12]],
-    ['geodata/geoJson/Day4-0-BusToStore.geojson', ['day4', Cesium.Color.DARKBLUE, 13]],
-    ['geodata/geoJson/Day4-1-WalkToStore.geojson', ['day4', Cesium.Color.INDIGO, 14]],
-    ['geodata/geoJson/Day4-2-BusToStart.geojson', ['day4', Cesium.Color.DARKBLUE, 15]],
-    ['geodata/geoJson/Day4-3-Main.geojson', ['day4', Cesium.Color.INDIGO, 16]],
-    ['geodata/geoJson/Day5-0-WalkToBus.geojson', ['day5', Cesium.Color.DARKGREEN, 17]],
-    ['geodata/geoJson/Day5-1-BusToStart.geojson', ['day5', Cesium.Color.DARKOLIVEGREEN, 18]],
-    ['geodata/geoJson/Day5-2-Main.geojson', ['day5', Cesium.Color.DARKGREEN, 19]],
-    ['geodata/geoJson/Day6-0-Main.geojson', ['day6', Cesium.Color.CRIMSON, 20]],
-    ['geodata/geoJson/Day7-0-BusToMerano.geojson', ['day7', Cesium.Color.MAROON, 21]],
-    ['geodata/geoJson/Day7-1-Pizza.geojson', ['day7', Cesium.Color.FIREBRICK, 22]],
-]);
-const shouldSort = false;
-let map;
-const polylines = [];
-//let counter = 0;
-const promises = [];
+    //see at top
+    //let map;
+    //let mapPin;
+    //const polylines = [];
+    //const promises = [];
+    //let callable;
+
 // Initial promise to ensure the promises array is not empty and the await call works as expected/doesnt skip the whole forloop
-let initialPromiseResolve;
-const initialPromise = new Promise((resolve) => {
-    initialPromiseResolve = resolve;
-});
-promises.push(initialPromise);
+    //let initialPromiseResolve;
+    const initialPromise = new Promise((resolve) => {
+        initialPromiseResolve = resolve;
+    });
+    promises.push(initialPromise);
 
 
-let mapPin;
-files.forEach((value, key) => {
-   const promise =  Cesium.GeoJsonDataSource.load(key, {
-        clampToGround: true,
-        stroke: value[1],
-        strokeWidth: 10
-    }).then(dataSource => {
-        viewer.dataSources.add(dataSource);
-        if(!mapPin) {
-            mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
-            viewer.flyTo(mapPin);
-            //viewer.zoomTo(mapPin);
+    files.forEach((value, key) => {
+        const promise = Cesium.GeoJsonDataSource.load(key, {
+            clampToGround: true,
+            stroke: value[1],
+            strokeWidth: 10
+        }).then(dataSource => {
+            viewer.dataSources.add(dataSource);
+            if (!mapPin) {
+                mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
+                viewer.flyTo(mapPin);
+                //viewer.zoomTo(mapPin); //changing this has absolutely no performance benefits and looks worse
+            }
+
+
+            //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
+            //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+            polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+
+
+        });
+        promises.push(promise);
+        if (initialPromiseResolve) {
+            initialPromiseResolve();
+            initialPromiseResolve = null;
         }
 
-
-        //polylines.push(dataSource.entities.values[dataSource.entities.values.length-1].polyline.positions.getValue(Cesium.JulianDate.now())); //async shuffles order of polylines on deployment?
-       //polylines[counter++] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
-       polylines[value[2]] = dataSource.entities.values[dataSource.entities.values.length - 1].polyline.positions.getValue(Cesium.JulianDate.now());
+    });
 
 
-   });
-    promises.push(promise);
-    if (initialPromiseResolve) {
-        initialPromiseResolve();
-        initialPromiseResolve = null;
+    if (devAddPictures) {
+
+        viewer.screenSpaceEventHandler.setInputAction(function (click) {
+            const pickedObject = viewer.scene.pick(click.position);
+            if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polyline) {
+                const cartesian = viewer.scene.pickPosition(click.position);
+                if (Cesium.defined(cartesian)) {
+                    const intersect = findNearestPointOnSegments(returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian), cartesian);
+                    if (intersect && Cesium.defined(intersect) && intersect.x && intersect.y && intersect.z) {
+                        const redCone = viewer.entities.add({
+                            position: intersect,
+                            orientation: Cesium.Transforms.headingPitchRollQuaternion(
+                                intersect,
+                                new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(0), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
+                            ),
+                            cylinder: {
+                                length: 400,
+                                topRadius: 2.0,
+                                bottomRadius: 20.0,
+                                material: Cesium.Color.RED,
+                            },
+                            clampToGround: true
+                        });
+                        //writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
+                        writeToClipboard(`${intersect.x} ${intersect.y} ${intersect.z}`);
+                        setTimeout(() => {
+                            viewer.entities.remove(redCone);
+                        }, 2000);
+                    } else {
+                        console.error('intersect: ', intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
+
+                    }
+                }
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
 
-});
-initialize();
+    if (shouldSort) {
 
+        console.log('Sorting map by keys'); //wont get triggered in prod
+        name_coordinate_mapping.forEach((value, key) => {
+            //console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key +'\n'+ value);
+        });
+        const sortedKeys = sortMapKeys(name_coordinate_mapping, viewer, await getPolyLines(true));
+
+        name_coordinate_mapping = sortMapByKeys(name_coordinate_mapping, sortedKeys);
+        let mapString = '';
+        name_coordinate_mapping.forEach((value, key) => {
+            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);//wont get triggered in prod
+
+            mapString += `${key};${value}\n`;
+        });
+
+        await writeToClipboard(mapString);
+    }
+
+    initializeBillboards(name_coordinate_mapping, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
+    } catch (e) {
+        console.error('CesiumJS failed to initialize, switching to fallback mode');
+        alert('CesiumJS failed to initialize, switching to fallback mode\n' + e);
+        toggleFallbackContent();
+    }
+
+}
+/**
+ * Retrieves and optionally flattens the polylines from the CesiumJS viewer. Acts as an interface for synchronous access to the asynchronous data loading process.
+ *
+ * This function waits for all promises in the `promises` array to resolve, which ensures that all GeoJSON data sources are loaded.
+ * It then returns the polylines, either as a flat array or a nested array, depending on the `flat` parameter.
+ * The duration of the await call is logged to the console.
+ *
+ * @param {boolean} [flat=true] - If true, the returned polylines array will be flattened.
+ *
+ * This method is called from various parts of the application where polylines data is required, such as:
+ * - {@link initializeChart} - Uses the polylines data to generate the height profile for the chart.
+ * - {@link sortMapKeys} - Uses the polylines data to sort the map keys based on their positions.
+ * - {@link cesiumSetup} - Ensures that all polylines are loaded before proceeding with further setup.
+ *
+ * @returns {Promise<Array>} A promise that resolves to an array of polylines, either flattened or nested.
+ */
 async function getPolyLines(flat = true) {
     const start = performance.now();
     //console.log('Getting polylines: ' + polylines);
@@ -378,70 +559,57 @@ async function getPolyLines(flat = true) {
 }
 
 
-const referenceTablePaths = ['geodata\\imgsource\\lookupTable.txt', 'geodata/imgsource/lookupTable-Toni.txt'];
-/*const map = loadReferenceTables(referenceTablePaths).then(map => {
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', false);
-});*/
-
-/*
-async function initialize() {
-    const referenceTablePaths = ['geodata\\imgsource\\lookupTable.txt', 'geodata/imgsource/lookupTable-Toni.txt'];
-    map = await loadReferenceTables(referenceTablePaths);
-    initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures);
-}*/
-async function initialize() {
-    //const referenceTablePath = 'geodata\\imgsource\\combined_sorted.txt';
-    const referenceTablePath = 'geodata\\imgsource\\final_sorted.txt';
-    map = await loadReferenceTables(referenceTablePath);
 
 
-
-    if (shouldSort) {
-
-        console.log('Sorting map by keys');
-        map.forEach((value, key) => {
-            //console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key +'\n'+ value);
-        });
-        const sortedKeys = sortMapKeys(map, viewer, await getPolyLines(true));
-
-        map = sortMapByKeys(map, sortedKeys);
-        let mapString = '';
-        map.forEach((value, key) => {
-            console.log('http://127.0.0.1:8080/geodata/imgsource/combined/' + key + '\n' + value);
-
-            mapString += `${key};${value}\n`;
-        });
-
-        navigator.clipboard.writeText(mapString).then(() => {
-            console.log('Map data copied to clipboard');
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
-    }
-
-    //initializeBillboards(map, '/geodata/imgsource/combined-thumbnail', !devAddPictures); // fuck you in particular
-    initializeBillboards(map, 'geodata/imgsource/combined-thumbnail', !devAddPictures);
-}
-
-
-function sortMapKeys(map, viewer, cartArray = getPolylinesAsCartesianArrays(viewer, true)) {
-    console.log('Sorting map by keys');
+/**
+ * Sorts the keys of a map based on the number of previous points in a Cartesian array.
+ *
+ * This function sorts the keys of the provided map by calculating the number of previous points for each value
+ * in the Cartesian array. The sorted map is returned with keys ordered by their calculated values. {@link getNumPreviousPoints}
+ *
+ * This methods result can be combined with this methods map parameter and piped into {@link sortMapByKeys} to sort the map
+ *
+ * @param {Map} map - The map to be sorted, where keys are image filenames and values are their corresponding Cartesian coordinates.
+ * @param {Cesium.Viewer} viewer - The CesiumJS viewer instance used to retrieve the Cartesian arrays.
+ * Deprecated because it didnt work, this was the reason to add the getPolyLines() function
+ * @param {Array} [cartArray=getPolyLines(true)] - The Cartesian array of polylines used for sorting. {@link getPolyLines}
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Was used during development and called if the sort flag was set to true.
+ * Back then it wasnt possible to sort and initialize the billboards in one go.
+ * Now after some refractoring sessions it should be, though it isnt used anymore, because the lookuptable is preordered
+ *
+ *
+ * @returns {Map} A new map with keys sorted based on the number of previous points in the Cartesian array.
+ */
+function sortMapKeys(map, viewer, cartArray) {
+    console.log('Sorting map by keys'); //wont get triggered in prod
     const sortedMap = new Map();
-/* why the fuck cant i access the viewers polylines
-console.log('CartArray:', viewer.entities.values[1]);
-viewer.entities.values.forEach(entity => {
-    console.log(entity.polyline.positions.getValue(Cesium.JulianDate.now())[0]);// BRUH WHAT THE ACTUAL FUCK HOW ARE YOU EMPTY WHERE DID ALL MY POLYLINES FUCKING GO
-});
-//                mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
-    //map.entries().forEach(([key, value]) => {*/
-    map.forEach((value,key) => {
+
+    map.forEach((value, key) => {
         sortedMap.set(key, getNumPreviousPoints(value, cartArray));
     });
 
-    return new Map([...sortedMap.entries()].sort((a, b) => a[1] - b[1]));;
+    return new Map([...sortedMap.entries()].sort((a, b) => a[1] - b[1]));
+    ;
 
 
 }
+
+/**
+ * Sorts a map based on a provided array of sorted keys.
+ *
+ * This function creates a new map with keys ordered according to the provided sorted keys array.
+ * A possible parameter for the sorted keys array is the result of {@link sortMapKeys}.
+ * @param {Map} map - The original map to be sorted.
+ * @param {Array} sortedKeys - The array of sorted keys used to order the map.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Ensures that the map keys are sorted before initializing billboards.
+ *
+ *
+ * @returns {Map} A new map with keys sorted according to the provided sorted keys array.
+ */
 function sortMapByKeys(map, sortedKeys) {
     const sortedMap = new Map();
     sortedKeys.forEach((value, key) => {
@@ -451,14 +619,34 @@ function sortMapByKeys(map, sortedKeys) {
     });
     return sortedMap;
 }
-
+/**
+ * Calculates the number of previous points in a Cartesian array relative to a given position.
+ *
+ * This function finds the nearest point to the given position in the Cartesian array and returns its index.
+ * The index represents the number of previous points in the array relative to the given position.
+ *
+ * @param {Cesium.Cartesian3} pos - The position to find the nearest point to.
+ * @param {Array<Cesium.Cartesian3>} cartesianArray - The array of Cartesian points to search within.
+ *
+ * This method is called from:
+ * - {@link sortMapKeys} - Uses this function to determine the number of previous points for each value in the map.
+ *
+ * The result is used to:
+ * - Sort the keys of a map based on their positions in the Cartesian array.
+ *
+ * @returns {number} The index of the nearest point in the Cartesian array, representing the number of previous points.
+ */
 function getNumPreviousPoints(pos, cartesianArray) {
-    const key= returnNearestPoints(cartesianArray, pos)[1];
+    const key = returnNearestPoints(cartesianArray, pos)[1];
     return cartesianArray.indexOf(key);
 }
 
+/**
+ * @deprecated Used to retrieve polylines loaded as datasources into the viewer, but didnt work,
+ * functionality replaced by async {@link getPolyLines}
+ * */
 function getPolylinesAsCartesianArrays(viewer, fuse = false) {
-    console.log('Getting polylines as cartesian arrays');
+    console.log('Getting polylines as cartesian arrays'); //wont get triggered in prod
     const polylines = [];
 
     viewer.entities.values.forEach(entity => {
@@ -475,67 +663,33 @@ function getPolylinesAsCartesianArrays(viewer, fuse = false) {
     }
 }
 
-
-
-
-function loadReferenceTables_deprecated(referenceTablePaths) {
-    let map = new Map();
-    const fetchPromises = referenceTablePaths.map(path => fetch(path).then(response => response.text()));
-
-    return Promise.all(fetchPromises)
-        .then(texts => {
-            const regex = /{x:\s*([\d.]+),\s*y:\s*([\d.]+),\s*z:\s*([\d.]+)}/;
-
-            texts.forEach(text => {
-                const lines = text.split('\n'); // example: 20240707_181241-Benedikt.jpg;{x: 4256561.011988274, y: 769295.5877462273, z: 4672850.862949777}
-                for (const line of lines) {
-                    const [key, valueString] = line.split(';');
-                    if (valueString) {
-                        const match = valueString.match(regex);
-                        let value;
-                        if (match) {
-                            value = new Cesium.Cartesian3(parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3]));
-                        } else {
-                            value = new Cesium.Cartesian3(null, null, null);
-                        }
-                        map.set(key, value);
-                    } else {
-                        console.warn('Invalid line format:', line);
-                    }
-                }
-            });
-            return map;
-        });
-}
-
-function loadReferenceTables(referenceTablePath) {
-    let map = new Map();
-    return fetch(referenceTablePath)
-        .then(response => response.text())
-        .then(text => {
-
-            const lines = text.split('\n'); // example: IMG-20240709-WA0036.jpg;4271311.463420066 784591.8384901393 4658090.60018335;from Website
-            for (const line of lines) {
-                if(line.startsWith('//')) continue;
-                const [key, valueString, altText] = line.split(';');
-                if (valueString) {
-                    const [x, y, z] = valueString.split(' ').map(parseFloat);
-                    const value = new Cesium.Cartesian3(x, y, z);
-                    map.set(key, value);
-                    constructHTMLdivs(key, valueString, altText );
-                } else {
-                    console.warn('Invalid line format:', line);
-                }
-            }
-
-            loadHTMLdivs();
-
-
-            return map;
-        });
-}
-/*
-function initializeBillboards(map, prePath = '/geodata/imgsource/benedikt-thumbnail') {
+/**
+ * Initializes billboards on the CesiumJS viewer based on the provided map of Cartesian coordinates.
+ *
+ * This function adds billboards to the CesiumJS viewer for each entry in the provided map. Each billboard is positioned
+ * at the corresponding Cartesian coordinates and displays an image. Optionally, click events can be added to the billboards
+ * to trigger slide changes in the gallery, by calling the interfacing method {@link changeSlide}.
+ *
+ * @param {Map} map - A map where keys are image filenames and values are their corresponding Cartesian coordinates.
+ * @param {string} [prePath='/geodata/imgsource/combined-thumbnail'] - The path to the thumbnail images.
+ * @param {boolean} [addClickEvent=true] - If true, click events are added to the billboards to change slides in the gallery
+ * using {@link changeSlide} this flag is needed during development to switch between adding pictures or retrieving
+ * cartesian coordinates for future billboards. It is probably dependent on the global variable `devAddPictures`
+ * set in the main exectuin block and passed through the {@link cesiumSetup} function.
+ *
+ * This method sets the variable `callable` to a function that can be called to trigger the hover effect on the toolbar buttons.
+ * The reference of which is used in {@link moveCesiumFigure} to trigger the hover effect on the track map button if its
+ * out of view.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Ensures that the billboards are initialized after the CesiumJS viewer is set up.
+ *
+ * The result is used to:
+ * - Display billboards on the CesiumJS viewer at specified positions.
+ * - Enable interaction with the billboards to change slides in the gallery.
+ */
+function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
+    //throw new Error('Test fallback mode');
     const billboards = [];
 
     map.forEach((value, key) => {
@@ -544,70 +698,6 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/benedikt-thumbn
                 position: value,
                 billboard: {
                     image: `${prePath}/thumbnail_${key}`,
-                    width: 50,
-                    height: 50,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                    disableDepthTestDistance: Number.POSITIVE_INFINITY //avoid clipping
-                },
-                clampToGround: true
-            });
-
-            billboards.push(entity);
-
-            entity.billboard.id = key; // :/
-            viewer.screenSpaceEventHandler.setInputAction(function(click) {
-                const pickedObject = viewer.scene.pick(click.position);
-                if (Cesium.defined(pickedObject) && pickedObject.id === entity) {
-                    const slideIndex = getSlideIndexFromKey(key); // Function to get slide index from key
-                    changeSlide(slideIndex);
-                }
-            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-        } else {
-            console.warn('No valid cartesian coordinates found for key:', key);
-        }
-    });
-
-    viewer.scene.preRender.addEventListener(() => {
-        const cameraPosition = viewer.camera.position;
-        billboards.forEach(entity => {
-            const distance = Cesium.Cartesian3.distance(cameraPosition, entity.position.getValue(Cesium.JulianDate.now()));
-            const scale = Math.max(0.1, 1 / (distance / 1000)); // Adjust the scale factor as needed
-            entity.billboard.width = 50 * scale;
-            entity.billboard.height = 50 * scale;
-        });
-    });
-
-    const toggleButton = document.createElement('button');
-    toggleButton.textContent = 'Toggle Billboards';
-    toggleButton.style.position = 'absolute';
-    toggleButton.style.top = '10px';
-    toggleButton.style.left = '10px';
-    document.body.appendChild(toggleButton);
-
-    toggleButton.addEventListener('click', () => {
-        billboards.forEach(entity => {
-            entity.show = !entity.show;
-        });
-    });
-
-    viewer.zoomTo(viewer.entities);
-}
-
-function getSlideIndexFromKey(key) {
-    const match = key.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-}
-*/
-let callable;
-function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbnail', addClickEvent = true) {
-    const billboards = [];
-
-    map.forEach((value, key) => {
-        if (value.x && value.y && value.z) {
-            const entity = viewer.entities.add({
-                position: value,
-                billboard: {
-                    image: `${prePath}/thumbnail_${key}`, // Path to the image file
                     width: 50,
                     height: 50,
                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
@@ -624,12 +714,11 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
             if (addClickEvent) {
                 entity.billboard.id = key; // store the key in the billboard id for reference, is there a better way?
                 viewer.screenSpaceEventHandler.setInputAction(function (click) {
-                    console.log('Clicked on entity:');
                     const pickedObject = viewer.scene.pick(click.position);
                     if (Cesium.defined(pickedObject) && billboards.includes(pickedObject.id)) {
                         const index = Array.from(map.keys()).indexOf(pickedObject.id);
                         const selfIndex = billboards.indexOf(pickedObject.id);
-                        console.log('Clicked on entity:', pickedObject.id, ' at index:', index, 'selfIndex:', selfIndex);
+                        // console.log('Clicked on entity:', pickedObject.id, ' at index:', index, 'selfIndex:', selfIndex);
                         changeSlide(billboards.indexOf(pickedObject.id));
                     }
                 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -656,19 +745,8 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     const toolbar = document.querySelector("div.cesium-viewer-toolbar");
     const modeButton = document.querySelector("span.cesium-sceneModePicker-wrapper");
 
-   /* const hoverEffectStyle = document.createElement("style");
-    hoverEffectStyle.textContent = `
-.temp-hover {
-    color: #fff !important;
-    fill: #fff !important;
-    background: #48b !important;
-    border-color: #aef !important;
-    box-shadow: 0 0 8px #fff !important;
-}
-`;
-    document.head.appendChild(hoverEffectStyle); */
 
-// Function to trigger hover effect
+    // Inner Function
     function triggerHoverEffect(button, duration = 1000) {
         button.classList.add('temp-hover');
         setTimeout(() => {
@@ -676,38 +754,20 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         }, duration); // Adjust the duration as needed
     }
 
-// Hide Button
     const hideButton = document.createElement("button");
-    hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button");
+    hideButton.classList.add("cesium-button", "cesium-toolbar-button", "hide-button"); // hide-button css element
+    // references     'background-image: url('geodata/objects/figure/eye.png');' Beware, still in use
     hideButton.style.position = "relative";
     hideButton.title = "Toggle Route Preview Image Visibility";
 
-    const hideButtonStyle = document.createElement("style");
-    hideButtonStyle.textContent = `
-.hide-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('geodata/objects/figure/eye.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: invert(1);
-}
-`;
-    document.head.appendChild(hideButtonStyle);
-
     hideButton.addEventListener("click", () => {
-        if(hideButton.classList.contains('hidden')){
+        if (hideButton.classList.contains('hidden')) {
             hideButton.classList.remove('hidden');
             billboards.forEach(entity => {
                 entity.show = true;
             });
 
-        }else{
+        } else {
             hideButton.classList.add('hidden');
             billboards.forEach(entity => {
                 entity.show = false;
@@ -718,29 +778,11 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         });*/
     });
 
-// Track Button
     const trackButton = document.createElement("button");
-    trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button");
+    trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button"); // track-button css element
+    // references     'background-image: url('geodata/objects/figure/map-pin.png');' Beware, still in use
     trackButton.style.position = "relative";
     trackButton.title = "Track the figure, when it moves after a picture change, or a height profile selection";
-
-    const trackButtonStyle = document.createElement("style");
-    trackButtonStyle.textContent = `
-.track-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('geodata/objects/figure/map-pin.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: invert(1);
-}
-`;
-    document.head.appendChild(trackButtonStyle);
 
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
@@ -757,45 +799,31 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
         }
     });
 
-    callable = function () {
-        //console.log('callable');
-        callable = function () { //this seems like an absolute terrible solution, but it works kinda
-           // console.log('callable');
+        callable = function () { //this seems like an absolute terrible solution, but it kind of works
+            // console.log('callable');
             for (let i = 0; i < 5; i++) { //implement css animation instead
                 setTimeout(() => {
                     triggerHoverEffect(trackButton, 350);
                 }, i * 700); // why do i have to do it this way?
             }
         }
-    }
 
     toolbar.insertBefore(trackButton, modeButton);
     toolbar.insertBefore(hideButton, modeButton);
 
-
-// Example usage: trigger hover effect on both buttons
-// Zoom to the latest added entity
-//viewer.zoomTo(viewer.entities); //TODO: uncomment because working
 }
-//cannot add this to the cesium toolbar, because this needs to work in the fallback mode as well
-const mapButton = document.createElement('button');
-mapButton.textContent = 'Switch to Static Map';
-mapButton.style.position = 'absolute';
-mapButton.style.top = '10px';
-mapButton.style.left = '10px';
-document.body.appendChild(mapButton);
 
-mapButton.addEventListener('click', () => {
-    toggleFallbackContent(mapButton);
-});
-
-
-
-function initializePlane(map){
+/**
+ * @deprecated probably, honestly have no idea what this was supposed to do and it isnt referenced anywhere anymore
+ * TODO
+ * @param map containing some value (perhaps the image name) and value containing the cartesian coordinates, which are then
+ * used to place ellipsoids on the map
+ */
+function initializePlane(map) {
     map.forEach((value, key) => {
-        console.log('Key:', key, 'Value:', value);
+        console.log('Key:', key, 'Value:', value);//wont get triggered in prod
 
-        if(value.x && value.y && value.z) {
+        if (value.x && value.y && value.z) {
             viewer.entities.add({
                 position: value,
                 ellipsoid: {
@@ -807,65 +835,61 @@ function initializePlane(map){
                 },
                 clampToGround: true
             });
-        }else{
+        } else {
             console.warn('No valid cartesian coordinates found for key:', key);
         }
     });
 //zoom to the latest added entity
-    viewer.zoomTo(viewer.entities);
-}
-
-const devAddPictures = false;
-if(devAddPictures) {
-
-    viewer.screenSpaceEventHandler.setInputAction(function(click) {
-        const pickedObject = viewer.scene.pick(click.position);
-        if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polyline) {
-            const cartesian = viewer.scene.pickPosition(click.position);
-            if (Cesium.defined(cartesian)) {
-                const intersect = findNearestPointOnSegments(returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian), cartesian);
-                if (intersect&&Cesium.defined(intersect)&&intersect.x&&intersect.y&&intersect.z) {
-                    const redCone = viewer.entities.add({
-                        position: intersect,
-                        orientation: Cesium.Transforms.headingPitchRollQuaternion(
-                            intersect,
-                            new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(0), Cesium.Math.toRadians(0), Cesium.Math.toRadians(0))
-                        ),
-                        cylinder: {
-                            length: 400,
-                            topRadius: 2.0,
-                            bottomRadius: 20.0,
-                            material: Cesium.Color.RED,
-                        },
-                        clampToGround: true
-                    });
-                    //writeToClipboard(`{x: ${intersect.x}, y: ${intersect.y}, z: ${intersect.z}}`);// these are cartesians right?
-                    writeToClipboard(`${intersect.x} ${intersect.y} ${intersect.z}`);
-                    setTimeout(() => {
-                        viewer.entities.remove(redCone);
-                    }, 2000);
-                }else{
-                    console.error('intersect: ',intersect, ' at clicked point: ', cartesian, '\nNo intersection found! Probably too close to different geojson segment!'); //TODO Fix this
-
-                }
-            }
-        }
-    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-
-
+    //viewer.zoomTo(viewer.entities);
 
 }
 
+/**
+ * Writes the provided text to the clipboard.
+ *
+ * This function attempts to write the given text to the clipboard using the Clipboard API. If the operation is successful,
+ * a message is logged to the console indicating that the text was copied. If the operation fails, an error message is logged.
+ *
+ * @param {string} text - The text to be copied to the clipboard.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Copies the sorted map data to the clipboard after sorting the map keys.
+ * And from {@link cesiumSetup} when adding pictures to the map, the selected cartesian coordinates are copied to the clipboard
+ *
+ * The result is used to:
+ * - Provide the sorted map data for further use like python scripts in which i use it to map the images to the coordinates
+ * or used it to parse the html divs and the lookuptable
+ *
+ * @returns {Promise<void>} A promise that resolves when the text has been successfully written to the clipboard. cant remember why i did this :D
+ */
 async function writeToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
-        console.log(text, ' copied to clipboard');
+        console.log(text, ' copied to clipboard'); //wont get triggered in prod
     } catch (err) {
         console.error('Failed to copy text: ', err);
     }
 }
-
+/**
+ * Finds the nearest points in a Cartesian array relative to a given position (which is retrieved from the click event)
+ * when selecting a point on the map for billboard placement.
+ *
+ * This function iterates over the provided positions to find the nearest point to the click position.
+ * It then returns the nearest point along with (hopefully) its immediate left and right neighbors in the array.
+ *
+ * @param {Array<Cesium.Cartesian3>} positions - The array of Cartesian points to search within, most likely the polyline segment
+ * @param {Cesium.Cartesian3} clickPosition - The position to find the nearest point to.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} in case the `devAddPictures` flag is set, where the result is passed to {@link findNearestPointOnSegments} for further calculations.
+ * - {@link getNumPreviousPoints} - Uses this function to retrieve the middle point at index 1 of the returned array,
+ *          to figure out the number of previous points in the Cartesian array.
+ *
+ * The result is used to:
+ * - Determine the nearest points for various calculations and visualizations in the CesiumJS viewer.
+ *
+ * @returns {Array<Cesium.Cartesian3>} An array containing the 3 closest points which hopefully are the left neighbor, nearest point, and right neighbor.
+ */
 function returnNearestPoints(positions, clickPosition) {
     let nearestPoint = null;
     let minDistance = Number.MAX_VALUE;
@@ -882,14 +906,16 @@ function returnNearestPoints(positions, clickPosition) {
 
     // problem, if the point to the left and the point two to the left are closer together than the point to the left and the point to the right,
     // a pair not surrounding the clicked coordinate is returned, solution:
-    // return all three 😇👍
+    // return all three 😇👍 (in extreme cases the problem persists)
 
     // if(Cesium.Cartesian3.distance(left, clickPosition) < Cesium.Cartesian3.distance(right, clickPosition)) {
     //     return [left, nearestPoint];
     // }
     return [left, nearestPoint, right];
 }
-
+/**
+ * @deprecated This function is deprecated in favor of {@link findNearestPointOnSegments}, which uses projection-based calculations for greater accuracy.
+ */
 function approximateNearestMidpoint(positions, clickPosition) {
     //deprecated using vector arithmetic instead
     const [left, nearestPoint, right] = positions;
@@ -901,8 +927,7 @@ function approximateNearestMidpoint(positions, clickPosition) {
 
     const leftRelative = leftToPoint / leftToCenter;
     const rightRelative = rightToPoint / rightToCenter;
-    if(leftRelative < rightRelative) {
-        console.log('Left is closer');
+    if (leftRelative < rightRelative) {
         const blackBox = viewer.entities.add({
             position: left,
             box: {
@@ -918,7 +943,6 @@ function approximateNearestMidpoint(positions, clickPosition) {
         }, 2000);
         return [left, nearestPoint];
     }
-    console.log('Right is closer');
 
     const blackBox = viewer.entities.add({
         position: right,
@@ -939,56 +963,10 @@ function approximateNearestMidpoint(positions, clickPosition) {
     //were to increase again
 }
 
-
+/**
+ * @deprecated This function was once used to visualize a selection of points in various calculations
+ */
 function visualizeSelection(positions, cartesian) {
-    /* const nearestPoint = nearestPoint1;// Cesium.Cartesian3.midpoint(nearestPoint1, nearestPoint2, new Cesium.Cartesian3());
-               const nearestCartographic = Cesium.Cartographic.fromCartesian(nearestPoint);
-               const nearestLongitude = Cesium.Math.toDegrees(nearestCartographic.longitude);
-               const nearestLatitude = Cesium.Math.toDegrees(nearestCartographic.latitude);
-               console.log(`Clicked long: ${longitude}, lat: ${latitude}, point: ${cartesian}, cartographic: ${cartographic}, \ncolor: ${color}, \nNearest: long: ${nearestLongitude}, lat: ${nearestLatitude}, point: ${nearestPoint}, cartographic: ${nearestCartographic}, \nDistance: ${Cesium.Cartesian3.distance(nearestPoint, cartesian)}`);
-*/
-
-
-
-
-    //nonsense:
-    /*                const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
-            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-            console.log(`Clicked Position: Longitude: ${longitude}, Latitude: ${latitude}`);
-
-            // Get the color of the path
-            const color = pickedObject.id.polyline.material.color.getValue(Cesium.JulianDate.now());
-            console.log(`Path Color: ${color}`);
-
-            // Find the nearest point on the clicked polyline
-            const [nearestPoint1, center, nearestPoint2] = returnNearestPoints(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian);
-            const [pos1, pos2] = approximateNearestMidpoint([nearestPoint1, center, nearestPoint2], cartesian);
-            const intersect = findNearestPointOnSegments([nearestPoint1, center, nearestPoint2], cartesian);
-            console.log('Nearest points:', nearestPoint1, nearestPoint2,'Real: ', findNearestPoint(pickedObject.id.polyline.positions.getValue(Cesium.JulianDate.now()), cartesian));
-            if (true){//(nearestPoint1) {
-
-
-
-
-
-
-
-
-
-                //viewer.flyTo(redCone);
-
-                // Remove marker after 2 seconds
-                setTimeout(() => {
-                    viewer.entities.remove(clickedPos);
-                    viewer.entities.remove(redCone);
-                    viewer.entities.remove(blueCone);
-                    viewer.entities.remove(blackCone);
-                }, 2000);
-            }else {
-                console.warn('No nearest point found, clicked: long:', longitude, 'lat:', latitude, 'color:', color);
-            }*/
-
 
 
     const clickedPos = viewer.entities.add({
@@ -1053,7 +1031,28 @@ function visualizeSelection(positions, cartesian) {
     return [nearestPoint, right];
 }
 
-
+/**
+ * Finds the nearest point on the segments defined by three points relative to a given point.
+ *
+ * This function calculates the nearest point on the segments [a, b] and [b, c] to the given point using projection and
+ * then selects the closer one, while making sure to clamp the result to the segment. `t = Math.max(0, Math.min(1, t));`
+ *
+ * @param {Array<Cesium.Cartesian3>} points - An array containing three Cartesian points [a, b, c].
+ * @param {Cesium.Cartesian3} point - The point to find the nearest point to.
+ *
+ * This method is called from:
+ * - {@link returnNearestPoints} - Uses this function to find the nearest points on segments for further calculations.
+ *
+ * The result is used to:
+ * - Determine the nearest points for various calculations and visualizations in the CesiumJS viewer.
+ *
+ * This method was chosen over the deprecated {@link approximateNearestMidpoint} because it provides a more accurate
+ * calculation of the nearest point using vector arithmetic. The deprecated method relied on distance comparisons
+ * which could lead to incorrect results in certain cases.
+ *
+ * @returns {Cesium.Cartesian3} The nearest point on the segments to the given point.
+ * Thanks copilot for the jsdoc comment :D
+ */
 function findNearestPointOnSegments(points, point) {
     const [a, b, c] = points;
 
@@ -1091,80 +1090,24 @@ function findNearestPointOnSegments(points, point) {
         return nearestOnBC;
     }
 }
-/*
-days.forEach((day, index) => {
 
-    Cesium.GeoJsonDataSource.load(getGeoJsonFile(index-1, day), {
-        clampToGround: true,
-        stroke: colors[index],
-        strokeWidth: 10
-    }).then(dataSource => {
-        viewer.dataSources.add(dataSource);
-        if (index === days.length - 1) {
-            //viewer.zoomTo(dataSource);
-        }
-
-
-
-        const entities = dataSource.entities.values;
-
-        const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
-
-
-    if(!backpackEntity) {
-        backpackEntity = viewer.entities.add({
-            position: Cesium.Cartesian3.fromElements(firstPosition.x, firstPosition.y, firstPosition.z),
-            orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-            model: {
-                uri: 'geodata/objects/figure/backpack/backpack.glb',
-                scale: 0.5,
-               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-
-        });
-        viewer.flyTo(backpackEntity);
-    }
-
-
-
-    }).catch(error => {
-        console.error(`Failed to load GeoJSON file indexed: ${index} and from ${day}`, error);
-    });
-});
-*///TODO: uncomment working code!
-
-
-
+/**
+ * Initializes a 3D map pin model on the CesiumJS viewer at the specified initial position.
+ *
+ * This function adds a 3D model of a map pin to the CesiumJS viewer at the given initial position.
+ * The model is animated and clamped to the ground. The viewer's clock is set to animate the model
+ * with a slower multiplier to smooth out the animation.
+ *
+ * @param {Cesium.Viewer} viewer - The CesiumJS viewer instance where the map pin will be added.
+ * @param {Cesium.Cartesian3} initialPosition - The initial position of the map pin in Cartesian coordinates.
+ *
+ * This method is called from:
+ * - {@link cesiumSetup} - Initializes the map pin after setting up the CesiumJS viewer. The return value is then stored
+ * in the global variable `mapPin`.
+ *
+ * @returns {Cesium.Entity} The created map pin entity.
+ */
 function initializePin(viewer, initialPosition) {
-    /*const floatingHeight = 10.0; // Height to float
-    const rotationSpeed = Cesium.Math.toRadians(10); // Rotation speed in radians per second
-
-    const positionProperty = new Cesium.CallbackProperty((time, result) => {
-        const elapsedTime = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
-        const height = floatingHeight * Math.sin(elapsedTime);
-        return Cesium.Cartesian3.add(initialPosition, new Cesium.Cartesian3(0, 0, height), result);
-    }, false);
-
-    const orientationProperty = new Cesium.CallbackProperty((time, result) => {
-        const elapsedTime = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
-        const heading = rotationSpeed * elapsedTime;
-        return Cesium.Transforms.headingPitchRollQuaternion(initialPosition, new Cesium.HeadingPitchRoll(heading, 0, 0), result);
-    }, false);*/
-
-
-
-
-
-
-    /*const mapPin = viewer.entities.add({
-        position: initialPosition, //positionProperty,
-        //orientation: orientationProperty,
-        model: {
-            uri: 'geodata/objects/figure/map-pin.glb',
-            scale: 1000,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-        }
-    });*/
 
     const mapPin = viewer.entities.add({
         position: initialPosition,
@@ -1184,17 +1127,41 @@ function initializePin(viewer, initialPosition) {
     return mapPin;
 }
 
+
+/**
+ * Moves the CesiumJS map pin to the position corresponding to the given index in the name-coordinate mapping, defined in the global variable `name_coordinate_mapping`.
+ *
+ * This function updates the position of the global `mapPin` entity to the coordinates associated with the specified index
+ * in the `name_coordinate_mapping`. It also checks if the map pin is within the current view and triggers a hover effect
+ * on the toolbar buttons if the pin is out of view and not being tracked, using the globally defined `callable` function,
+ * which is set in {@link initializeBillboards}.
+ *
+ * @param {number} index - The index of the position in the `name_coordinate_mapping` to move the map pin to.
+ *
+ *
+ * This method is called from:
+ * - {@link changeSlide} - Does not directly call this function, but indirectly through the slide change callback in the
+ * LightGallery instance defined here:
+ * - {@link initializeGallery} Contains a callback the map pin position when the slide in the LightGallery instance changes.
+ *
+ * @see {@link initializeBillboards} - Sets up the `callable` function used to trigger the hover effect on the toolbar buttons.
+ */
 function moveCesiumFigure(index) {
-   //print(map.values[index].position);
+    //print(map.values[index].position);
     //mapPin.position = Cesium.Cartesian3.fromElements(10,10,10);
 
     //print(map.keys()[index]);
-        if(!map){
-            console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
-            return;
-        }
+    if (!name_coordinate_mapping) {
+        console.warn('Map not loaded yet! Wait a few milliseconds for the site to fully initialize');
+        return;
+    }
+    if (!mapPin) {
+        console.warn('Map Pin not loaded up yet! Wait a few milliseconds for the site to fully initialize');
+        return; // i have a strong feeling that this error gets triggered, when the website url contains an image, and
+        // he loading up of which is in some rare cases faster than the cesium setup, causing the mapPin to be null
+    }
 
-   const mapArray = Array.from(map.entries());
+    const mapArray = Array.from(name_coordinate_mapping.entries());
     if (index >= 0 && index < mapArray.length) {
         const [key, value] = mapArray[index];
         //console.log('Key:', key, 'Value:', value);
@@ -1202,13 +1169,25 @@ function moveCesiumFigure(index) {
     } else {
         console.warn('Index out of bounds:', index);
     }
-    console.log('Is visible:', isEntityInRect(mapPin));
+//    console.log('Is visible:', isEntityInRect(mapPin));
 
-    if(!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
+    if (!isEntityInRect(mapPin) && viewer.trackedEntity !== mapPin) {
         callable();
     }
 
 }
+
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isPositionInView(position) {
 
     const globeBoundingSphere = new Cesium.BoundingSphere(
@@ -1222,7 +1201,17 @@ function isPositionInView(position) {
 
     return occluder.isPointVisible(position);
 }
-
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isEntityInRect(entity) {
     const position = entity.position.getValue(Cesium.JulianDate.now());
     const cartographic = Cesium.Cartographic.fromCartesian(position);
@@ -1231,7 +1220,17 @@ function isEntityInRect(entity) {
     return Cesium.Rectangle.contains(viewRectangle, cartographic);
 
 }
-
+/**
+ * These three functions are used to figure out if the `mapPin`'s position passed as parameter is in the view of the camera
+ * The viewers cam is accessed through the global variable `viewer` set in the main execution block which i should probably
+ * change to be a normal parameter.
+ *
+ * There are three functions because in theory these should all be working solutions i found on stackoverflow or multiple
+ * different cesium forum questions. In practice none of them work, all the time, and i dont know why.
+ *
+ * @param position
+ * @returns {boolean} true if the position is in view, false otherwise
+ */
 function isEntityInView(entity) {
     const camera = viewer.camera;
     const frustum = camera.frustum;
@@ -1248,99 +1247,16 @@ function isEntityInView(entity) {
 // Check if the entity is visible in the screen.
     const intersection = cullingVolume.computeVisibility(boundingSphere);
 
-    console.log(intersection);
+    console.log(intersection);//wont get triggered in prod
 //  1: Cesium.Intersect.INSIDE
 //  0: Cesium.Intersect.INTERSECTING
 // -1: Cesium.Intersect.OUTSIDE
 
 }
 
-    /*const entities = dataSource.entities.values;
-
-    const firstPosition = entities[0].polyline.positions.getValue(Cesium.JulianDate.now())[0];
-
-
-    if(!backpackEntity) {
-        backpackEntity = viewer.entities.add({
-            position: Cesium.Cartesian3.fromElements(firstPosition.x, firstPosition.y, firstPosition.z),
-            orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-            model: {
-                uri: 'geodata/objects/figure/backpack/backpack.glb',
-                scale: 0.5,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-
-        });
-        viewer.flyTo(backpackEntity);
-    }
-
-/*
-initializePin(viewer, mapPin.position.getValue(Cesium.JulianDate.now()));
-mapPin = viewer.entities.add({
-                    position: Cesium.Cartesian3.fromElements(dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].x, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].y, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0].z),
-                    //orientation: Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(0)),
-                    model: {
-                        uri: 'geodata/objects/figure/map-pin.glb',
-                        scale: 1000,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                    }
-
-                });
-
-
-let redBox = viewer.entities.add({
-    name: "Red box with black outline",
-    position: Cesium.Cartesian3.fromDegrees(0, 0, 0), // Initial position
-    box: {
-        dimensions: new Cesium.Cartesian3(40.0, 30.0, 60.0),
-        material: Cesium.Color.RED.withAlpha(0.5),
-        outline: true,
-        outlineColor: Cesium.Color.BLACK,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-    }
-});
-
-*/
-
-
-//testing block end. uncomment working code above!
-const backpackEntity = null;
-function updateBackpackPosition(cartesianPosition) {
-    if (backpackEntity) {
-        //viewer.trackedEntity = backpackEntity;
-        backpackEntity.position = cartesianPosition;
-        //viewer.camera.move(backpackEntity);
-        if (document.getElementById('trackEntity').checked) {
-            ensureEntityVisible_camreset(backpackEntity);
-            console.log('Entity is visible');
-        }
-    }
-    changeSlide(1);
-    console.log('Changing slide to 1');
-    //TODO get this work :/
-
-}
-
-
-// sorted by folder, use when pushing to prod
-function getFirstGeoJsonFile(index, day) {
-    const basePath = 'geodata/';
-    const path = `${basePath}${day}/`;
-    const geoJsonFileName =  `gps-data-e5-long-distance-hiking-trail_${index + 1}.geojson`;
-    const fullPath = `${path}${geoJsonFileName}`;
-    return fullPath
-}
-
-//use only for testing, unsorted
-function getGeoJsonFile(index, day) {
-    const basePath = 'geodata/temp/Connected/';
-    //const path = `${basePath}${day}/`;
-    const geoJsonFileName =  `gps-data-e5-long-distance-hiking-trail_${index + 1}.geojson`;
-    const fullPath = `${basePath}${geoJsonFileName}`;
-    return fullPath
-}
-
-
+//The following functions were used rigth in the beginning when trying to implement my own version of cesiums
+//entity tracked functionality. this was because the cesium tracked entity callback will reset the cams pitch angle and zoom
+// and also moved on every position change, all of which i didnt want. i eventually plan to reimplement this functionality
 function ensureEntityVisible_camreset(entity) {
     const position = entity.position.getValue(Cesium.JulianDate.now());
     const cartographic = Cesium.Cartographic.fromCartesian(position);
@@ -1381,17 +1297,31 @@ function ensureEntityVisible(entity) {
 }
 
 
-function createCamCenteredBox_deprecated() {
-    const { offsetX, offsetY } = calcOffset(viewer.camera);
+async function updateRedBoxPosition() {
+    //return;
+    //await new Promise(resolve => setTimeout(resolve, 2000));
+    const {offsetX, offsetY} = raycastOffset(viewer);
+    const absoluteCartesian3 = pickRay(viewer.camera);
+    console.log('Absolute cartesian3: ', absoluteCartesian3);//wont get triggered in prod
+    const newPosition = Cesium.Cartesian3.fromElements(
+        viewer.camera.position.x + offsetX,
+        viewer.camera.position.y + offsetY,
+        viewer.camera.position.z
+    );
+    redBox.position = newPosition;
+}
 
-    console.log('Creating box at: ', viewer.camera.position.x + offsetX, viewer.camera.position.y + offsetY, viewer.camera.position.z);
-    console.log('Camera position: ', viewer.camera.position.x, viewer.camera.position.y, viewer.camera.position.z);
-    console.log('\n');
+function createCamCenteredBox_deprecated() {
+    const {offsetX, offsetY} = calcOffset(viewer.camera);
+
+    console.log('Creating box at: ', viewer.camera.position.x + offsetX, viewer.camera.position.y + offsetY, viewer.camera.position.z);//wont get triggered in prod
+    console.log('Camera position: ', viewer.camera.position.x, viewer.camera.position.y, viewer.camera.position.z);//wont get triggered in prod
+    console.log('\n');//wont get triggered in prod
     //abort if the offset is too high or the resulting coordinate is nan
     if (isNaN(viewer.camera.position.x + offsetX) || isNaN(viewer.camera.position.y + offsetY)) {
         const error = new Error();
         const stack = error.stack.split('\n')[1].trim();
-        console.warn(`Offset is too high, aborting. [${stack}]`);
+        console.warn(`Offset is too high, aborting. [${stack}]`);//wont get triggered in prod
         return;
     }
     const redBox = viewer.entities.add({
@@ -1415,7 +1345,8 @@ function calcOffset(viewerCam) {
     const offsetY = Math.tan(viewerCam.heading) * height;
     return {offsetX, offsetY};
 }
-function camGroundOffset(scene, ellipsoid){
+
+function camGroundOffset(scene, ellipsoid) {
     var cameraHeight = ellipsoid.cartesianToCartographic(scene.camera.position).height;
     return cameraHeight;
 }
@@ -1436,51 +1367,17 @@ function raycastOffset(viewer) {
         const cartographic = Cesium.Cartographic.fromCartesian(intersection);
         const offsetX = cartographic.longitude - camera.positionCartographic.longitude;
         const offsetY = cartographic.latitude - camera.positionCartographic.latitude;
-        return { offsetX, offsetY };
+        return {offsetX, offsetY};
     } else {
         console.warn('No intersection with the ground found.');
-        return { offsetX: 0, offsetY: 0 };
+        return {offsetX: 0, offsetY: 0};
     }
 }
 
-async function changeBackpackPositionOverTime() {
-    const positions = [
-        Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4205, 37.658, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4185, 37.656, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4195, 37.657, 400),
-        Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400)
-    ];
-for(let i = 0; i < 20; i++) {
-    for (const position of positions) {
-        updateBackpackPosition(position);
-
-        await new Promise(resolve => setTimeout(resolve, 10000));
-    }
-}
-}
-
-
-
-
-async function updateRedBoxPosition() {
-    return;
-    //await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const { offsetX, offsetY } = raycastOffset(viewer);
-    const absoluteCartesian3 = pickRay(viewer.camera);
-    console.log('Absolute cartesian3: ', absoluteCartesian3);
-    const newPosition = Cesium.Cartesian3.fromElements(
-        viewer.camera.position.x + offsetX,
-        viewer.camera.position.y + offsetY,
-        viewer.camera.position.z
-    );
-    redBox.position = newPosition;
-}
 
 function pickRay(viewer) {
     const scene = viewer.scene;
-    console.log('Scene: ', scene);
+    console.log('Scene: ', scene);//wont get triggered in prod
     const windowPosition = new Cesium.Cartesian2(viewer.container.clientWidth / 2, viewer.container.clientHeight / 2);
     const pickRay = scene.camera.getPickRay(windowPosition);
     const pickPosition = scene.globe.pick(pickRay, scene);
@@ -1489,127 +1386,31 @@ function pickRay(viewer) {
         const pickPositionCartographic = Cesium.Cartographic.fromCartesian(pickPosition);
         const apilon = pickPositionCartographic.longitude * (180 / Math.PI);
         const apilat = pickPositionCartographic.latitude * (180 / Math.PI);
-        return { longitude: apilon, latitude: apilat };
+        return {longitude: apilon, latitude: apilat};
     } else {
         console.warn('No intersection with the ground found.');
         return null;
     }
 }
 
-viewer.camera.changed.addEventListener(() => {
-    //updateRedBoxPosition();
-});
 
-
-
-window.onload = () => {
-    //changeBackpackPositionOverTime();
-};
-
-//
-// Cesium.GeoJsonDataSource.load('geodata/tracks.geojson', {
-//     clampToGround: true,
-//     stroke: Cesium.Color.RED,
-//     strokeWidth: 10
-// }).then(dataSource => {
-//     viewer.dataSources.add(dataSource);
-//     viewer.zoomTo(dataSource);
-//
-//     const positions = [];
-//     const elevations = [];
-//     dataSource.entities.values.forEach(entity => {
-//         if (entity.polyline) {
-//             const polylinePositions = entity.polyline.positions.getValue(Cesium.JulianDate.now());
-//             polylinePositions.forEach(position => {
-//                 const cartographic = Cesium.Cartographic.fromCartesian(position);
-//                 positions.push(position);
-//                 elevations.push(cartographic.height);
-//             });
-//         }
-//     });
-//
-//     const positionProperty = new Cesium.SampledPositionProperty();
-//     positions.forEach((position, index) => {
-//         const time = Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), index, new Cesium.JulianDate());
-//         positionProperty.addSample(time, position);
-//     });
-//
-//     const playerEntity = viewer.entities.add({
-//         position: positionProperty,
-//         billboard: {
-//             image: 'favicon.ico', // Path to your player icon image
-//             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-//         },
-//         path: {
-//             resolution: 1,
-//             material: new Cesium.PolylineGlowMaterialProperty({
-//                 glowPower: 0.1,
-//                 color: Cesium.Color.YELLOW,
-//             }),
-//             width: 10,
-//         },
-//     });
-//
-//     viewer.trackedEntity = playerEntity;
-//
-//     const ctx = document.getElementById('heightProfile').getContext('2d');
-//     const chart = new Chart(ctx, {
-//         type: 'line',
-//         data: {
-//             labels: positions.map((_, index) => index),
-//             datasets: [{
-//                 label: 'Elevation',
-//                 data: elevations,
-//                 borderColor: 'rgba(75, 192, 192, 1)',
-//                 borderWidth: 1,
-//                 fill: false
-//             }]
-//         },
-//         options: {
-//             scales: {
-//                 x: {
-//                     type: 'linear',
-//                     position: 'bottom'
-//                 }
-//             }
-//         }
-//     });
-//
-//     document.getElementById('heightProfile').addEventListener('mousemove', (event) => {
-//         const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
-//         if (points.length) {
-//             const pointIndex = points[0].index;
-//             const time = Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), pointIndex, new Cesium.JulianDate());
-//             playerEntity.position.setInterpolationOptions({
-//                 interpolationDegree: 1,
-//                 interpolationAlgorithm: Cesium.LinearApproximation
-//             });
-//             playerEntity.position.addSample(time, positions[pointIndex]);
-//         }
-//     });
-// });
-
-// Add Cesium OSM Buildings, a global 3D buildings layer.
-Cesium.createOsmBuildingsAsync().then(buildingTileset => {
-    viewer.scene.primitives.add(buildingTileset);
-});
 
 //-------------------Chart.js-------------------
+async function initializeChart() {
+    Chart.register(Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
-Chart.register( Chart.LineElement, Chart.LineController, Chart.Legend, Chart.Tooltip, Chart.LinearScale, Chart.PointElement, Chart.Filler, Chart.Title);
 
-
-const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
-const nthElement = Math.ceil(gpxData.length / screen.width);
-const data = gpxData
-    .filter((_, index) => index % nthElement === 0)
-    .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
+    const gpxData = await getPolyLines(true); //On deployed environment, the routes get shuffled?
+    const nthElement = Math.ceil(gpxData.length / screen.width);
+    const data = gpxData
+        .filter((_, index) => index % nthElement === 0)
+        .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
 
 // Hardcoding these by gpx.studio from the combined route calculated values like a dumbfuck because i dont wanna
 // go through the pain of calculating these myself in cesium right now, the rest is real though i swear
-const ROUTE_LENGTH = 213950; //213.95km
-const ROUTE_ELEVATION = 8272; //8272m
-const ROUTE_DESCENT = 8778; //8778m
+    const ROUTE_LENGTH = 213950; //213.95km
+    const ROUTE_ELEVATION = 8272; //8272m
+    const ROUTE_DESCENT = 8778; //8778m
 
 
 // Generate labels based on the data length
@@ -1617,121 +1418,132 @@ const ROUTE_DESCENT = 8778; //8778m
 // proportion of the data length to the total route length
 // TODO: test geojson density
 //const labels = data.map((_, index) => ROUTE_LENGTH*(data.length - index-1) / data.length); //the wrong way
-const labels = data.map((_, index) => ROUTE_LENGTH*( (index+1)/ data.length));
+    const labels = data.map((_, index) => ROUTE_LENGTH * ((index + 1) / data.length));
 
 
-const chartData = {
-    labels: labels,
-    datasets: [{
-        data: data,
-        fill: true,
-        borderColor: '#66ccff',
-        backgroundColor: '#66ccff66',
-        tension: 0.1,
-        pointRadius: 0,
-        spanGaps: true
-    }]
-};
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            data: data,
+            fill: true,
+            borderColor: '#66ccff',
+            backgroundColor: '#66ccff66',
+            tension: 0.1,
+            pointRadius: 0,
+            spanGaps: true
+        }]
+    };
 
-const config = {
-    type: 'line',
-    data: chartData,
-    plugins: [{
-        beforeInit: (chart, args, options) => {
-            const maxHeight = Math.max(...chart.data.datasets[0].data);
-            chart.options.scales.x.min = Math.min(...chart.data.labels);
-            chart.options.scales.x.max = Math.max(...chart.data.labels);
+    const config = {
+        type: 'line',
+        data: chartData,
+        plugins: [{
+            beforeInit: (chart, args, options) => {
+                const maxHeight = Math.max(...chart.data.datasets[0].data);
+                chart.options.scales.x.min = Math.min(...chart.data.labels);
+                chart.options.scales.x.max = Math.max(...chart.data.labels);
 
-            chart.options.scales.y.max = Math.ceil((maxHeight+500)/500)*500;
-            chart.options.scales.y1.max = Math.ceil((maxHeight+500)/500)*500;
+                chart.options.scales.y.max = Math.ceil((maxHeight + 500) / 500) * 500;
+                chart.options.scales.y1.max = Math.ceil((maxHeight + 500) / 500) * 500;
 
-            //chart.options.scales.y.max = Math.floor(maxHeight + 500);
-            //chart.options.scales.y1.max = Math.floor(maxHeight + 500);
+                //chart.options.scales.y.max = Math.floor(maxHeight + 500);
+                //chart.options.scales.y1.max = Math.floor(maxHeight + 500);
 
-            //chart.options.scales.y.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); i could round that up to
-            //chart.options.scales.y1.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); the nearest 100 but why actually?
-        }
-    }],
-    options: {
-        animation: {
-            duration: 7500
-        },
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        tooltip: { position: 'nearest' },
-        scales: {
-            x: { type: 'linear' },
-            y: { type: 'linear', beginAtZero: true },
-            y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }},
-        },
-        plugins: {
-            title: { align: "middle", display: true, text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m` },
-            legend: { display: false },
-            tooltip: {
-                displayColors: false,
-                callbacks: {
-                    title: (tooltipItems) => {
-                        /*console.log('Tooltip items1:', tooltipItems);
-                        console.log('Tooltip items:', tooltipItems[0].label);
-                        console.log('Tooltip items:', tooltipItems[0].raw);
-                        console.log('Tooltip items4:', parseFloat(tooltipItems[0].label));*/
-                        let distance;
-                        try {
-                            distance = (parseFloat(tooltipItems[0].label.replace(/,/g, '')) / 1000).toFixed(2);
-                        } catch (error) { // what the actual fuck does chartjs expect me to parse there, that looks like a recipe for parsing crashes
-                            console.error('Error parsing distance:', error);
-                            distance = 'N/A';
-                        }
-                        return "Distance: " + distance + 'km';
+                //chart.options.scales.y.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); i could round that up to
+                //chart.options.scales.y1.max = Math.floor(maxHeight + Math.round(maxHeight * 0.2)); the nearest 100 but why actually?
+            }
+        }],
+        options: {
+            animation: {
+                duration: 7500
+            },
+            maintainAspectRatio: false,
+            interaction: {intersect: false, mode: 'index'},
+            tooltip: {position: 'nearest'},
+            scales: {
+                x: {type: 'linear'},
+                y: {type: 'linear', beginAtZero: true},
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: {drawOnChartArea: false}
+                },
+            },
+            plugins: {
+                title: {
+                    align: "middle",
+                    display: true,
+                    text: `Distance ${ROUTE_LENGTH.toLocaleString()} m / Ascent ${ROUTE_ELEVATION} m / Descent ${ROUTE_DESCENT} m`
+                },
+                legend: {display: false},
+                tooltip: {
+                    displayColors: false,
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            /*console.log('Tooltip items1:', tooltipItems);
+                            console.log('Tooltip items:', tooltipItems[0].label);
+                            console.log('Tooltip items:', tooltipItems[0].raw);
+                            console.log('Tooltip items4:', parseFloat(tooltipItems[0].label));*/
+                            let distance;
+                            try {
+                                distance = (parseFloat(tooltipItems[0].label.replace(/,/g, '')) / 1000).toFixed(2);
+                            } catch (error) { // what the actual fuck does chartjs expect me to parse there, that looks like a recipe for parsing crashes
+                                console.error('Error parsing distance:', error);
+                                distance = 'N/A';
+                            }
+                            return "Distance: " + distance + 'km';
                         },
-                    label: (tooltipItem) => {
-                        return "Elevation: " + (Math.ceil(tooltipItem.raw*100)/100).toFixed(2) + 'm'
-                    },
+                        label: (tooltipItem) => {
+                            return "Elevation: " + (Math.ceil(tooltipItem.raw * 100) / 100).toFixed(2) + 'm'
+                        },
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    //const cartesian = gpxData[index*nthElement]; //TODO shouldnt this not work? we ceil to get the division integer
+                    //so the nthElement x the size of the shortened list could in some cases be a bit bigger than the actual list thus getting an out of bounds exception
+                    const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                    mapPin.position = cartesian;
+                }
+            },
+            onHover: (event, elements) => {
+                if (detectLeftButton()) {
+                    // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
+                    const index = elements[0].index;
+                    const cartesian = gpxData[Math.min(index * nthElement, gpxData.length - 1)];
+                    mapPin.position = cartesian;
                 }
             }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const index = elements[0].index;
-                //const cartesian = gpxData[index*nthElement]; //TODO shouldnt this not work? we ceil to get the division integer
-                //so the nthElement x the size of the shortened list could in some cases be a bit bigger than the actual list thus getting an out of bounds exception
-                const cartesian = gpxData[Math.min(index*nthElement, gpxData.length-1)];
-                mapPin.position=cartesian;
-            }
-        },
-        onHover: (event, elements) => {
-            if(detectLeftButton()){
-           // if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
-                const index = elements[0].index;
-                const cartesian = gpxData[Math.min(index*nthElement, gpxData.length-1)];
-                mapPin.position= cartesian;
-            }
         }
-    }
-};
-function detectLeftButton(evt=null) {
-    /*evt = evt || window.event;
-    if ("buttons" in evt) {
-        return evt.buttons == 1;
-    }
-    var button = evt.which || evt.button;
-    return button == 1;
+    };
+
+    function detectLeftButton(evt = null) {
+        /*evt = evt || window.event;
+        if ("buttons" in evt) {
+            return evt.buttons == 1;
+        }
+        var button = evt.which || evt.button;
+        return button == 1;
+    //----
+        if(window.event.which==1){
+            return true;
+        }*/
 //----
-    if(window.event.which==1){
-        return true;
-    }*/
-//----
-    //if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
-    return false;
+        //if (event.type === 'mousemove' && event.buttons === 1 && elements.length > 0) {
+        return false;
+    }
+
+    const ctx = document.getElementById("route-elevation-chart").getContext("2d");
+    const chart = new Chart(ctx, config);
+
 }
 
-const ctx = document.getElementById("route-elevation-chart").getContext("2d");
-const chart = new Chart(ctx, config);
 
-
-let isFallbackLoaded = false;
-
-function toggleFallbackContent(buttonElement) {
+function toggleFallbackContent_dpr(buttonElement) {
     const cesiumContainer = document.getElementById('cesiumContainer');
 
     if (isFallbackLoaded) {
@@ -1763,73 +1575,39 @@ function toggleFallbackContent(buttonElement) {
         iframe.src = 'StaticMap.html';
         iframe.style.display = 'block';
         isFallbackLoaded = true;
-        buttonElement.textContent = 'Switch to Dynamic Map';
+        try {
+            buttonElement.textContent = 'Switch to Dynamic Map'; //happend in testing, this will get executed rarely anyways
+        }catch (error) {
+            console.error('Failed to set button text:', error);
+        }
     }
 }
-/*
 
-//extract every nth element from gpx data array
-const gpxData = await getPolyLines(true);
-const nthElement = Math.ceil(gpxData.length / screen.width);
-const data = gpxData
-    .filter((_, index) => index % 4 === 0)
-    .map(cartesian => Cesium.Cartographic.fromCartesian(cartesian).height);
-console.log('Data:', data);
+function toggleFallbackContent(buttonElement) {
+    const cesiumContainer = document.getElementById('cesiumContainer');
+    const iframe = document.getElementById('static-map-iframe');
 
-const ctx = document.getElementById("route-elevation-chart").getContext("2d");
+    if (isFallbackLoaded) {
+        location.reload(); // Reload because I'm too cheap to implement a proper toggle :)
+    } else {
+        cesiumContainer.style.display = 'none';
 
+        // Show the iframe
+        iframe.src = 'StaticMap.html';
+        iframe.style.display = 'block';
 
-const chartData = {
-    labels: [0, 21, 44, 68, 88, 109, 125, 134, 139, 156, 164, 172, 187, 208, 263, 441, 472, 591, 664, 707, 785, 823, 900, 941, 1057, 1096, 1135, 1175, 1214], // this is test data
-    datasets: [{
-        data: [2377, 2378, 2379, 2380, 2381, 2382, 2383, 2383, 2383, 2384, 2384, 2384, 2384, 2384, 2388, 2391, 2392, 2393, 2392, 2391, 2394, 2395, 2397, 2397, 2394, 2393, 2394, 2393, 2392], // this is test data
-        fill: true,
-        borderColor: '#66ccff',
-        backgroundColor: '#66ccff66',
-        tension: 0.1,
-        pointRadius: 0,
-        spanGaps: true
-    }]
-};
+        // Add an event listener to load the script after the iframe content is loaded
+        iframe.addEventListener('load', () => {
+            const script = document.createElement('script');
+            script.src = 'StaticMap.js';
+            document.body.appendChild(script);
+        });
 
-const config = {
-    type: 'line',
-    data: chartData,
-    plugins: [{
-        beforeInit: (chart, args, options) => {
-            const maxHeight = Math.max(...chart.data.datasets[0].data);
-            chart.options.scales.x.min = Math.min(...chart.data.labels);
-            chart.options.scales.x.max = Math.max(...chart.data.labels);
-            chart.options.scales.y.max = maxHeight + Math.round(maxHeight * 0.2);
-            chart.options.scales.y1.max = maxHeight + Math.round(maxHeight * 0.2);
-        }
-    }],
-    options: {
-        animation: true,
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        tooltip: { position: 'nearest' },
-        scales: {
-            x: { type: 'linear' },
-            y: { type: 'linear', beginAtZero: true },
-            y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }},
-        },
-        plugins: {
-            title: { align: "end", display: true, text: "Distance, m / Elevation, m" },
-            legend: { display: false },
-            tooltip: {
-                displayColors: false,
-                callbacks: {
-                    title: (tooltipItems) => {
-                        return "Distance: " + tooltipItems[0].label + 'm'
-                    },
-                    label: (tooltipItem) => {
-                        return "Elevation: " + tooltipItem.raw + 'm'
-                    },
-                }
-            }
+        isFallbackLoaded = true;
+        try {
+            buttonElement.textContent = 'Switch to Dynamic Map';
+        } catch (error) {
+            console.error('Failed to set button text:', error);
         }
     }
-};
-
-const chart = new Chart(ctx, config);*/
+}
