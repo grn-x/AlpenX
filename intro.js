@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const imageContainer = document.querySelector('.image-container');
+        const imageWrappers = document.querySelectorAll('.image-wrapper');
         const popup = document.querySelector('.popup');
 
         /*console.log('before: ');
@@ -50,6 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
             imageContainer.style.flexDirection = 'column';
             imageContainer.style.maxWidth = '80%';
             imageContainer.style.margin = '0 auto';
+            imageWrappers.forEach(wrapper => {
+                //wrapper.minHeight = '150px';
+                //wrapper.padding = '5px';
+            });
 
             popup.style.overflowY = 'auto';
         }
@@ -58,12 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeStyles = () => {
         const imageContainer = document.querySelector('.image-container');
         const popup = document.querySelector('.popup');
+        const imageWrappers = document.querySelectorAll('.image-wrapper');
 
         if (imageContainer && popup) {
             imageContainer.style.flexDirection = '';
             imageContainer.style.maxWidth = '';
             imageContainer.style.margin = '';
-
+            imageWrappers.forEach(wrapper => {
+                //wrapper.minHeight = '0';
+                //wrapper.padding = '2.5rem';
+            });
             popup.style.overflowY = '';
         }
     };

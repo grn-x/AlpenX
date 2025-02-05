@@ -84,8 +84,8 @@ h2 {
 .image-wrapper {
     position: relative;
     flex: 1;
-    min-height: 30%; /*TODO*/
-    max-width: 50vw;
+    min-height: 0; /*TODO*/
+    max-width: 60vh;
     aspect-ratio: 16/9;
     padding: var(--image-padding);
     background-color: var(--box-bg);
@@ -150,5 +150,9 @@ but a working rescaling requires it */
         aspect-ratio: auto;
         max-width: 90%;
         max-height: 90%;
+    }
+    .image-wrapper {
+        padding: 5px; /*needs testing*/
+        min-height: 20vh;
     }
 }
