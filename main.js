@@ -9,6 +9,14 @@
 
 
 //------------------- ##START## Entry Point / Main Execution Block -------------------
+
+import { modalSystem } from './intro.js';
+let cleanup;
+if (cleanup) cleanup();
+cleanup = await modalSystem.openDialog(); //await to ensure the popup is visible before the buggy loading
+
+
+
 let innterHTMLcontent = ''; //else this creates an undefined element in the document
 let gallery_instance;
 let loadDivsPromiseResolve;
