@@ -90,20 +90,30 @@ export class ModalSystem {
         setTimeout(() => {
             overlay.style.opacity = '1';
             this.centerImagesWithCaptions();
+
+            if (this.initialPopupSize === -1) {
+                this.initialPopupSize = window.innerWidth;
+            }
+
             if (this.innerCalcCaptionHeight() || window.innerWidth/window.innerHeight < 1) {
                 this.applyStyles();
+            } else {
+                this.removeStyles();
             }
+
             this.centerImagesWithCaptions();
         }, 100);
 
         this.handleResize = this.debounce(() => {
             this.centerImagesWithCaptions();
+
+            if (this.initialPopupSize === -1) {
+                this.initialPopupSize = window.innerWidth;
+            }
+
             if (window.innerWidth > this.initialPopupSize) {
-                if (this.initialPopupSize === -1) {
-                    if (this.innerCalcCaptionHeight()) this.applyStyles();
-                }
                 this.removeStyles();
-            } else if (this.innerCalcCaptionHeight()) {
+            } else if (this.innerCalcCaptionHeight() || window.innerWidth/window.innerHeight < 1) {
                 this.applyStyles();
             }
         }, 150);
