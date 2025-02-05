@@ -1,5 +1,5 @@
+<!-- Deprecated sample code to test refractoring / conversion -->
 document.addEventListener('DOMContentLoaded', () => {
-    const openButton = document.getElementById('openPopup');
     const closeButton = document.getElementById('closePopup');
     const overlay = document.getElementById('overlay');
     let initialPopupSize = -1; //this will be replaced by the current screensize the first time,
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    openButton.addEventListener('click', () => {
+    /*openButton.addEventListener('click', () => {
         overlay.style.display = 'block';
         document.body.style.overflow = 'hidden';
 
@@ -124,7 +124,22 @@ document.addEventListener('DOMContentLoaded', () => {
             centerImagesWithCaptions();
 
         }, 100);
-    });
+    });*/
+
+    const open = () => {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            centerImagesWithCaptions();
+            if(innerCalcCaptionHeight()||window.innerWidth/window.innerHeight<1)applyStyles(); //this will set ``initialPopupSize`` to a wrong value
+            //innerCalcCaptions somehow wont trigger on mobiles where the actual pixel density is the same, but the
+            //aspect ratio is different, this causes all sorts of troubles and im so sick of having to do dirty css js workarounds
+            //because im too incompetent to do write proper css what a disease
+            centerImagesWithCaptions();
+        }, 100);
+    }
 
     let resizeTimeout; //TODO fix resizing
     window.addEventListener('resize', () => {
@@ -172,5 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') {
             closePopup();
         }
+        if (e.key === 'Enter') {
+            open();
+        }
     });
+    open();
 });
