@@ -218,6 +218,7 @@ function loadImages(map) {
  * <br>
  * @see {@link loadHTMLdivs} - The resulting HTML string is used by this function to populate the gallery element in the DOM.
  */
+
 function constructHTMLdivs(filename, location, altText, thumbnailPath = 'geodata/imgsource/combined-thumbnail', imagePath = 'geodata/imgsource/combined') {
     const elementString = `
         <a href="${imagePath}/${filename}" data-src="${imagePath}/${filename}" class="gallery-item" data-location="${location} custom-tag"tag">
@@ -840,6 +841,7 @@ function initializePlane(map) {
     });
 //zoom to the latest added entity
     //viewer.zoomTo(viewer.entities);
+
 }
 
 /**
