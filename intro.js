@@ -76,20 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             popup.style.overflowY = '';
         }
     };
-
-    openButton.addEventListener('click', () => {
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-
-        // is wait really necessary?
-        setTimeout(() => {
-            overlay.style.opacity = '1';
-            centerImagesWithCaptions();
-            if(innerCalcCaptionHeight())applyStyles(); //this will set ``initialPopupSize`` to a wrong value
-            centerImagesWithCaptions();
-
-        }, 100);
-    });
     const innerCalcCaptionHeight = () => {
         /*const imageWrappers = document.querySelectorAll('.image-wrapper');
         imageWrappers.forEach(wrapper => { //wtf you dont support premature return statements??
@@ -122,6 +108,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         });
     };
+
+    openButton.addEventListener('click', () => {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+
+        // is wait really necessary?
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            centerImagesWithCaptions();
+            if(innerCalcCaptionHeight()||window.innerWidth/window.innerHeight<1)applyStyles(); //this will set ``initialPopupSize`` to a wrong value
+            //innerCalcCaptions somehow wont trigger on mobiles where the actual pixel density is the same, but the
+            //aspect ratio is different, this causes all sorts of troubles and im so sick of having to do dirty css js workarounds
+            //because im too incompetent to do write proper css what a disease
+            centerImagesWithCaptions();
+
+        }, 100);
+    });
 
     let resizeTimeout; //TODO fix resizing
     window.addEventListener('resize', () => {
