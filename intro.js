@@ -3,6 +3,7 @@ export class ModalSystem {
         this.initialized = false;
         this.modalHTML = null;
         this.styleSheet = null;
+        this.initialPopupSize = -1;
     }
 
     async initialize() {
@@ -19,6 +20,10 @@ export class ModalSystem {
         this.styleSheet.href = './intro.css';
         document.head.appendChild(this.styleSheet);
 
+        await new Promise((resolve) => {
+            this.styleSheet.onload = resolve;
+        });
+
         this.initialized = true;
     }
 
@@ -32,8 +37,15 @@ export class ModalSystem {
 
         document.body.insertAdjacentHTML('beforeend', this.modalHTML);
 
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
         const overlay = document.getElementById('overlay');
         const closeButton = document.getElementById('closePopup');
+
+        if (!overlay || !closeButton) {
+            console.error('Modal elements not found');
+            return;
+        }
 
         const closePopup = () => {
             overlay.style.opacity = '0';
@@ -43,16 +55,38 @@ export class ModalSystem {
             }, 300);
         };
 
-        closeButton.addEventListener('click', closePopup);
-        overlay.addEventListener('click', (e) => {
+        const cleanup = () => {
+            closeButton.removeEventListener('click', closePopup);
+            overlay.removeEventListener('click', overlayClick);
+            document.removeEventListener('keydown', keydownHandler);
+            window.removeEventListener('resize', this.handleResize);
+        };
+
+        const overlayClick = (e) => {
             if (e.target === overlay) closePopup();
-        });
-        document.addEventListener('keydown', (e) => {
+        };
+
+        const keydownHandler = (e) => {
             if (e.key === 'Escape') closePopup();
-        });
+        };
+
+        closeButton.addEventListener('click', closePopup);
+        overlay.addEventListener('click', overlayClick);
+        document.addEventListener('keydown', keydownHandler);
 
         overlay.style.display = 'block';
         document.body.style.overflow = 'hidden';
+
+        const images = overlay.querySelectorAll('.popup-image');
+        await Promise.all(
+            Array.from(images).map(img =>
+                img.complete ? Promise.resolve() : new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                })
+            )
+        );
+
         setTimeout(() => {
             overlay.style.opacity = '1';
             this.centerImagesWithCaptions();
@@ -62,24 +96,52 @@ export class ModalSystem {
             this.centerImagesWithCaptions();
         }, 100);
 
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => this.centerImagesWithCaptions(), 0);
-        });
+        this.handleResize = this.debounce(() => {
+            this.centerImagesWithCaptions();
+            if (window.innerWidth > this.initialPopupSize) {
+                if (this.initialPopupSize === -1) {
+                    if (this.innerCalcCaptionHeight()) this.applyStyles();
+                }
+                this.removeStyles();
+            } else if (this.innerCalcCaptionHeight()) {
+                this.applyStyles();
+            }
+        }, 150);
+
+        window.addEventListener('resize', this.handleResize);
+
+        return cleanup;
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     centerImagesWithCaptions() {
         const imageWrappers = document.querySelectorAll('.image-wrapper');
+        if (!imageWrappers.length) return;
+
         imageWrappers.forEach(wrapper => {
-            const image = wrapper.querySelector('.intro-image');
+            const image = wrapper.querySelector('.popup-image');
             const caption = wrapper.querySelector('.caption');
+
+            if (!image || !caption) return;
+
             image.style.maxHeight = '';
             const captionHeight = caption.offsetHeight;
             const computedStyle = window.getComputedStyle(wrapper);
             const paddingTop = parseFloat(computedStyle.paddingTop);
             const paddingBottom = parseFloat(computedStyle.paddingBottom);
             const availableHeight = wrapper.offsetHeight - paddingTop - paddingBottom - captionHeight;
+
             image.style.maxHeight = `${availableHeight}px`;
             const imageHeight = image.offsetHeight;
             const topSpace = (availableHeight - imageHeight) / 2;
@@ -89,9 +151,14 @@ export class ModalSystem {
 
     innerCalcCaptionHeight() {
         const imageWrappers = document.querySelectorAll('.image-wrapper');
+        if (!imageWrappers.length) return false;
+
         return Array.from(imageWrappers).some(wrapper => {
-            const image = wrapper.querySelector('.intro-image');
+            const image = wrapper.querySelector('.popup-image');
             const caption = wrapper.querySelector('.caption');
+
+            if (!image || !caption) return false;
+
             const wrapperHeight = wrapper.offsetHeight;
             const captionHeight = caption.offsetHeight;
             const halfWrapperHeight = wrapperHeight / 2;
@@ -102,13 +169,26 @@ export class ModalSystem {
 
     applyStyles() {
         const imageContainer = document.querySelector('.image-container');
-        const popup = document.querySelector('.intro');
-        if (imageContainer && popup) {
-            imageContainer.style.flexDirection = 'column';
-            imageContainer.style.maxWidth = '80%';
-            imageContainer.style.margin = '0 auto';
-            popup.style.overflowY = 'auto';
-        }
+        const popup = document.querySelector('.popup');
+
+        if (!imageContainer || !popup) return;
+
+        imageContainer.style.flexDirection = 'column';
+        imageContainer.style.maxWidth = '80%';
+        imageContainer.style.margin = '0 auto';
+        popup.style.overflowY = 'auto';
+    }
+
+    removeStyles() {
+        const imageContainer = document.querySelector('.image-container');
+        const popup = document.querySelector('.popup');
+
+        if (!imageContainer || !popup) return;
+
+        imageContainer.style.flexDirection = '';
+        imageContainer.style.maxWidth = '';
+        imageContainer.style.margin = '';
+        popup.style.overflowY = '';
     }
 }
 
