@@ -274,13 +274,14 @@ function initializeGallery() {
             showMaximizeIcon: true,
             plugins: [lgZoom, lgThumbnail, lgAutoplay, lgHash],
             thumbnail: true,
-            zoom: true,
+            //zoom: true,
             zoomPluginStrings: {
                 zoomIn: 'Zoom in',
                 zoomOut: 'Zoom out',
                 actualSize: 'Actual size'
             },
             zoom: {
+                enable: true,
                 scale: 1.5,
                 zoomFromOrigin: true // Does not seem to work //rtfm
 
@@ -440,7 +441,7 @@ async function cesiumSetup(shouldSort = false, devAddPictures = false) {
             if (!mapPin) {
                 mapPin = initializePin(viewer, dataSource.entities.values[0].polyline.positions.getValue(Cesium.JulianDate.now())[0]);
                 viewer.flyTo(mapPin);
-                //viewer.zoomTo(mapPin);
+                //viewer.zoomTo(mapPin); //changing this has absolutely no performance benefits and looks worse
             }
 
 
@@ -838,7 +839,7 @@ function initializePlane(map) {
         }
     });
 //zoom to the latest added entity
-    viewer.zoomTo(viewer.entities);
+    //viewer.zoomTo(viewer.entities);
 }
 
 /**
