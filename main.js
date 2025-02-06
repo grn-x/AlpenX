@@ -20,8 +20,27 @@ let cleanup;
 if (cleanup) cleanup();
 cleanup = modalSystem.openDialog(); //Why do the manipulation detection mechanisms only work if the dialog is manage asynchronously?
 
+String.prototype.hashCode = function() { // wow this is pretty neat, thanks js and https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+    var hash = 0,
+        i, chr;
+    if (this.length === 0) return hash;
+    for (i = 0; i < this.length; i++) {
+        chr = this.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}
+
+const str = 'Hello World';
+console.log(str);
+console.log(str.hashCode());
+
 document.addEventListener('DOMContentLoaded', () => {
     const correctPassword = 'pw'; //change password handling and use hash instead
+    const correctHash = correctPassword.hashCode(); //will replace later
+    let lastHash;
+    let lastPassword;
     const overlay = document.getElementById('lockOverlay');
     const passwordInput = document.getElementById('passwordInput');
     const submitButton = document.getElementById('submitPassword');
@@ -96,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }*/
 
     function testStyles() {
+        //TODO prematurely return false if hashes match
         const computedStyle = window.getComputedStyle(overlay);
 
         if (computedStyle.position !== 'fixed') {
@@ -199,12 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(detectCSSModification, 3000);
 
     function checkPassword() {
-        if (passwordInput.value === correctPassword) {
+        const inputHash = passwordInput.value.hashCode();
+        if (inputHash === correctHash) {
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
             }, 300);
             sessionStorage.setItem('contentUnlocked', 'true');
+            //sessionStorage.setItem //place hash here afterwards TODO
             errorMessage.style.display = 'none';
         } else {
             errorMessage.style.display = 'block';
