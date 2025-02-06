@@ -9,11 +9,217 @@
 
 
 //------------------- ##START## Entry Point / Main Execution Block -------------------
-
+/*
 import { modalSystem } from './intro.js';
 let cleanup;
 if (cleanup) cleanup();
 cleanup = await modalSystem.openDialog(); //await to ensure the popup is visible before the buggy loading
+*/
+import { modalSystem } from './intro.js';
+let cleanup;
+if (cleanup) cleanup();
+cleanup = modalSystem.openDialog(); //Why do the manipulation detection mechanisms only work if the dialog is manage asynchronously?
+
+document.addEventListener('DOMContentLoaded', () => {
+    const correctPassword = 'pw'; //change password handling and use hash instead
+    const overlay = document.getElementById('lockOverlay');
+    const passwordInput = document.getElementById('passwordInput');
+    const submitButton = document.getElementById('submitPassword');
+    const errorMessage = document.getElementById('errorMessage');
+
+    const initialStyles = {
+        position: 'fixed',
+        left: '0',
+        top: '0',
+        width: '50%',
+        height: '100%',
+        zIndex: '1000',
+        display: 'flex',
+        filter: 'blur(10px)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'opacity 0.3s',
+    };
+
+    function restoreOverlay(cause = null) { //will currently also trigger if a correct password was entered ;D
+        if(cause =! null) {
+            console.warn(cause);
+        }
+        alert('Styles manipulation');
+        Object.entries(initialStyles).forEach(([prop, value]) => {
+            overlay.style[prop] = value;
+        });
+        location.reload();
+    }
+
+    const overlayObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
+                restoreOverlay("Observer triggered");
+            }
+        });
+    });
+
+    overlayObserver.observe(overlay, {
+        attributes: true,
+        attributeFilter: ['style', 'class']
+    });
+
+    function manualStyleManipulation(){
+        if (testStyles()) {
+            restoreOverlay("Manual Style Manipulation");
+        }
+    }
+
+    /*function testStyles() { //doesnt work, computedStyle are absolute values, while the css uses relative values
+        const computedStyle = window.getComputedStyle(overlay);
+        const initialStylesMap = new Map(Object.entries(initialStyles));
+
+        for (let [key, value] of initialStylesMap) {
+            if (computedStyle.getPropertyValue(key).replaceAll('px', '') !== value) {
+                console.log('Styles have been tampered with');
+                console.log(computedStyle);
+                console.log(initialStyles);
+                console.log(key, value);
+                console.log(computedStyle.getPropertyValue(key), value);
+
+                console.log("\n");
+
+
+
+                alert('Styles have been changed');
+                //restoreOverlay();
+                return true;
+            }
+        }
+        return false;
+    }*/
+
+    function testStyles() {
+        const computedStyle = window.getComputedStyle(overlay);
+
+        if (computedStyle.position !== 'fixed') {
+            console.warn(computedStyle.position);
+            return true;
+        }
+        if (computedStyle.left.replaceAll('px', '') !== '0') {
+            console.warn(computedStyle.left);
+            return true;
+        }
+        if (computedStyle.top.replaceAll('px', '') !== '0') {
+            console.warn(computedStyle.top);
+            return true;
+        }
+        if (computedStyle.width !== '50%') {
+            //calculate absolute value of 50% of the viewport width
+            //then compare it to the computed value with some margin of error
+            if(Math.abs(parseFloat(computedStyle.width) - window.innerWidth * 0.5) > 10) {
+                return true;
+            }
+        }
+        if (computedStyle.height !== '100%') {
+            if(Math.abs(parseFloat(computedStyle.height) - window.innerHeight) > 10) {
+                return true;
+            }
+        }
+
+
+        if (computedStyle.zIndex !== '1000') {
+            console.warn(computedStyle.zIndex);
+            return true;
+        }
+        if (computedStyle.display !== 'flex') {
+            console.warn(computedStyle.display);
+            return true;
+        }
+        if (computedStyle.justifyContent !== 'center') {
+            console.warn(computedStyle.justifyContent);
+            return true;
+        }
+        if (computedStyle.alignItems !== 'center') {
+            console.warn(computedStyle.alignItems);
+            return true;
+        }
+        /*if (computedStyle.transition !== 'all 0.3s ease') {
+            console.warn(computedStyle.transition);
+            return true;
+        }*/
+
+        return false;
+    }
+
+    setInterval(manualStyleManipulation, 1000); // restore Overlay
+
+    function checkCSSIntegrity() {
+        const styleSheets = document.styleSheets;
+        let found = false;
+
+        for (let sheet of styleSheets) {
+            if (sheet.href && sheet.href.includes('styles.css')) { //main should throw an error anyways, causing the site to crash
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            restoreOverlay();
+        }
+    }
+
+    setInterval(checkCSSIntegrity, 2000);
+
+    const originalStyles = [];
+
+    function storeOriginalCSSRules() {
+        try {
+            const rules = document.styleSheets[0]?.cssRules || [];
+            for (let i = 0; i < rules.length; i++) {
+                originalStyles.push({ index: i, cssText: rules[i].cssText });
+            }
+        } catch (error) {
+            console.warn("css rule access blocked (due to cors restrictions?)");
+        }
+    }
+
+    function detectCSSModification() {
+        try {
+            const rules = document.styleSheets[0]?.cssRules || [];
+            for (let i = 0; i < rules.length; i++) {
+                if (originalStyles[i] && originalStyles[i].cssText !== rules[i].cssText) {
+                    restoreOverlay();
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn("css rule access blocked (due to cors restrictions?)");
+        }
+    }
+
+    storeOriginalCSSRules();
+    setInterval(detectCSSModification, 3000);
+
+    function checkPassword() {
+        if (passwordInput.value === correctPassword) {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+            sessionStorage.setItem('contentUnlocked', 'true');
+            errorMessage.style.display = 'none';
+        } else {
+            errorMessage.style.display = 'block';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+
+    submitButton.addEventListener('click', checkPassword);
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            checkPassword();
+        }
+    });
+});
 
 
 
