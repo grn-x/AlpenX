@@ -25,6 +25,16 @@
 </head>
 <body>
 <div id="container">
+
+    <div class="blur-overlay" id="lockOverlay">
+        <div class="password-container">
+            <h2>Enter Password</h2>
+            <input type="password" class="password-input" id="passwordInput" placeholder="Enter password">
+            <button class="submit-button" id="submitPassword">Unlock</button>
+            <p class="error-message" id="errorMessage">Incorrect password. Please try again.</p>
+        </div>
+    </div>
+
     <div id="cesiumContainer"></div>
     <iframe id="static-map-iframe" src=""></iframe>
     <div class="elevation-profile-container">
