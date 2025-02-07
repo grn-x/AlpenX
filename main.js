@@ -18,7 +18,6 @@ cleanup = await modalSystem.openDialog(); //await to ensure the popup is visible
 import { modalSystem } from './intro.js';
 let cleanup;
 if (cleanup) cleanup();
-cleanup = modalSystem.openDialog(); //Why do the manipulation detection mechanisms only work if the dialog is manage asynchronously?
 
 String.prototype.hashCode = function() { // wow this is pretty neat, thanks js and https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
     var hash = 0,
@@ -32,11 +31,9 @@ String.prototype.hashCode = function() { // wow this is pretty neat, thanks js a
     return hash;
 }
 
-const str = 'Hello World';
-console.log(str);
-console.log(str.hashCode());
 
 document.addEventListener('DOMContentLoaded', () => {
+
     const correctPassword = 'pw'; //change password handling and use hash instead
     const correctHash = correctPassword.hashCode(); //will replace later
     let lastHash;
@@ -45,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('passwordInput');
     const submitButton = document.getElementById('submitPassword');
     const errorMessage = document.getElementById('errorMessage');
+    const intervalIDmaps = [];
 
     const initialStyles = {
         position: 'fixed',
@@ -74,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlayObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
-                restoreOverlay("Observer triggered");
+                //restoreOverlay("Observer triggered");
             }
         });
     });
@@ -116,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function testStyles() {
         //TODO prematurely return false if hashes match
+        //or instead cancel the interval and observer
         const computedStyle = window.getComputedStyle(overlay);
 
         if (computedStyle.position !== 'fixed') {
@@ -168,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
-    setInterval(manualStyleManipulation, 1000); // restore Overlay
+    intervalIDmaps.push(setInterval(manualStyleManipulation, 1000)); // restore Overlay
 
     function checkCSSIntegrity() {
         const styleSheets = document.styleSheets;
@@ -186,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    setInterval(checkCSSIntegrity, 2000);
+    intervalIDmaps.push(setInterval(checkCSSIntegrity, 2000));
 
     const originalStyles = [];
 
@@ -216,11 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     storeOriginalCSSRules();
-    setInterval(detectCSSModification, 3000);
+    intervalIDmaps.push(setInterval(detectCSSModification, 3000));
 
     function checkPassword() {
         const inputHash = passwordInput.value.hashCode();
         if (inputHash === correctHash) {
+            intervalIDmaps.forEach(clearInterval);
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
@@ -242,6 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+cleanup = await modalSystem.openDialog(); //()=>{//.then(()=>{
+
+
 
 
 

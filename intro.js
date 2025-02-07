@@ -27,7 +27,8 @@ export class ModalSystem {
         this.initialized = true;
     }
 
-    async openDialog() {
+    async openDialog(callback = () => {}) {
+        callback(); //can i do this in parallel?
         await this.initialize();
 
         const existingModal = document.querySelector('#overlay');
