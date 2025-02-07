@@ -284,3 +284,82 @@ opacity: 1;
     font-size: 0.875rem;
     display: none;
 }
+
+
+
+.tooltip {
+    position: relative;
+    text-decoration: none;
+}
+
+.tooltip:after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 20%;
+    background: #ffcb66;
+    padding: 5px 15px;
+    color: black;
+    border-radius: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.tooltip:before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 20px solid #ffcb66;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    transition: all 0.4s ease;
+    opacity: 0;
+    left: 30%;
+    bottom: 90%;
+}
+
+.error-message:hover .tooltip:after {
+    bottom: 100%;
+    opacity: 1;
+}
+
+.error-message:hover .tooltip:before {
+    bottom: 70%;
+    opacity: 1;
+}
+
+.tooltip-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 130%;
+    left: 20%;
+    background: #ffcb66;
+    padding: 5px 15px;
+    color: black;
+    border-radius: 10px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.password-tooltip::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 20px solid #ffcb66;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    left: 30%;
+    bottom: -20px;
+}
+
+.password-input.incorrect:hover + .tooltip-wrapper .password-tooltip {
+    display: block;
+}
