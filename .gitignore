@@ -1,0 +1,18 @@
+.git
+.idea
+node_modules/**
+public/temp_pics/**
+public/geodata/imgsource/benedikt/**
+public/geodata/imgsource/benedikt-thumbnail/**
+public/geodata/imgsource/toni/**
+public/geodata/imgsource/toni-thumbnail/**
+public/geodata/imgsource/website/**
+public/geodata/imgsource/website-thumbnail/**
+#combined features another gitignore, unlisting the 5gb of picture storage
+#->
+#	*
+#	!.gitignore
+#public/geodata/objects/map/compressed_level4_zoom.glb#git lfs wont work
+#\public\geodata\objects\map\.gitignore
+#->
+#compressed_level14_zoom.glb
