@@ -194,6 +194,7 @@ opacity: 1;
     justify-content: center;
     align-items: center;
     transition: all 0.3s ease;
+    overflow: hidden; /* prevent box shadow */
 }
 
 .blur-overlay::before {
@@ -204,7 +205,7 @@ opacity: 1;
     right: 0;
     bottom: 0;
     backdrop-filter: blur(10px);
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.7);
 }
 
 .password-container {
@@ -233,6 +234,12 @@ opacity: 1;
     z-index: -1;
     box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
+    clip-path: polygon(
+            -1000% -1000%,  /* top-left extends far out */
+            50vw -1000%,    /* top-right at 50% viewport width */
+            50vw 1000%,     /* bottom-right at 50% viewport width */
+            -1000% 1000%    /* bottom-left extends far out */
+    );
 }
 
 .password-container::after {
@@ -291,27 +298,68 @@ opacity: 1;
     position: relative;
     text-decoration: none;
 }
+/*
+.password-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 130%;
+    left: 20%;
+    background: #dadada;
+    padding: 5px 15px;
+    color: black;
+    border-radius: 10px;
+    white-space: nowrap;
+    z-index: 10;
+}*/
+.password-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-150%);
+    background: #dadada;
+    padding: 10px 15px;
+    color: black;
+    border-radius: 10px;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
-.tooltip:after {
+/*.tooltip:after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: 130%;
     left: 20%;
-    background: #ffcb66;
+    background: #353b48;
     padding: 5px 15px;
     color: black;
     border-radius: 10px;
     white-space: nowrap;
     opacity: 0;
     transition: all 0.4s ease;
+}*/
+
+.password-tooltip::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #dadada;
 }
+
 
 .tooltip:before {
     content: "";
     position: absolute;
     width: 0;
     height: 0;
-    border-top: 20px solid #ffcb66;
+    border-top: 20px solid #353b48;
     border-left: 20px solid transparent;
     border-right: 20px solid transparent;
     transition: all 0.4s ease;
@@ -335,25 +383,14 @@ opacity: 1;
     width: 100%;
 }
 
-.password-tooltip {
-    display: none;
-    position: absolute;
-    bottom: 130%;
-    left: 20%;
-    background: #ffcb66;
-    padding: 5px 15px;
-    color: black;
-    border-radius: 10px;
-    white-space: nowrap;
-    z-index: 10;
-}
+
 
 .password-tooltip::before {
     content: "";
     position: absolute;
     width: 0;
     height: 0;
-    border-top: 20px solid #ffcb66;
+    border-top: 20px solid #dadada;
     border-left: 20px solid transparent;
     border-right: 20px solid transparent;
     left: 30%;

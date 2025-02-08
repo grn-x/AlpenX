@@ -27,7 +27,7 @@ String.prototype.hashCode = function() { // wow this is pretty neat, thanks js a
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const correctHash = 675608460 ;
+    const correctHash = 675608460;
     const overlay = document.getElementById('lockOverlay');
     const passwordInput = document.getElementById('passwordInput');
     const submitButton = document.getElementById('submitPassword');
@@ -106,8 +106,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         }*/
 
+        if(computedStyle.overflow !== 'hidden'){
+            return true;
+        }
         return false;
     }
+
+
     function anonymousCallbackFactory(refreshIntervalID){
         return (inputHash)=>{
             if(inputHash === correctHash)clearInterval(refreshIntervalID);
@@ -115,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     anonymousRemoveCallback = anonymousCallbackFactory(setInterval(manualStyleManipulation,1000));
+
 
 
     function checkPassword() {
@@ -125,8 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 overlay.style.display = 'none';
             }, 300);
-            sessionStorage.setItem('contentUnlocked', 'true');
-            //sessionStorage.setItem //place hash here afterwards TODO
+            sessionStorage.setItem('contentUnlocked', inputHash);
             errorMessage.style.display = 'none';
             passwordInput.classList.remove('incorrect');
         } else {
@@ -136,6 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
             passwordInput.classList.add('incorrect');
         }
     }
+
+    const token = parseInt(sessionStorage.getItem('contentUnlocked'))
+    if ( token === correctHash) {
+        anonymousRemoveCallback(token);
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+        errorMessage.style.display = 'none';
+        passwordInput.classList.remove('incorrect');
+    }else{
+        //what happened here? password changed in the meantime?
+    }
+
     submitButton.addEventListener('click', checkPassword);
     passwordInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -916,7 +935,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button"); // track-button css element
     // references     'background-image: url('geodata/objects/figure/map-pin.png');' Beware, still in use
     trackButton.style.position = "relative";
-    trackButton.title = "Track the figure, when it moves after a picture change, or a height profile selection";
+    trackButton.title = "Focus the MapPin\nFollow the figure’s movement after switching the picture or choosing a height profile point";
 
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
