@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 overlay.style.display = 'none';
             }, 300);
-            sessionStorage.setItem('contentUnlocked', inputHash);
+            sessionStorage.setItem('contentUnlocked', passwordInput.value);
             errorMessage.style.display = 'none';
             passwordInput.classList.remove('incorrect');
         } else {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const token = parseInt(sessionStorage.getItem('contentUnlocked'))
+    const token = parseInt(sessionStorage.getItem('contentUnlocked').hashCode())
     if ( token === correctHash) {
         anonymousRemoveCallback(token);
         overlay.style.opacity = '0';
