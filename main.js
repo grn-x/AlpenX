@@ -782,7 +782,7 @@ function initializeBillboards(map, prePath = '/geodata/imgsource/combined-thumbn
     trackButton.classList.add("cesium-button", "cesium-toolbar-button", "track-button"); // track-button css element
     // references     'background-image: url('geodata/objects/figure/map-pin.png');' Beware, still in use
     trackButton.style.position = "relative";
-    trackButton.title = "Track the figure, when it moves after a picture change, or a height profile selection";
+    trackButton.title = "Follow the figure’s movement after switching the picture or choosing a height profile point";
 
     trackButton.addEventListener("click", () => {
         if (viewer.trackedEntity === mapPin) {
