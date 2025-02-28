@@ -142,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const token = parseInt(sessionStorage.getItem('contentUnlocked').hashCode())
+    const token = sessionStorage.getItem('contentUnlocked')
+        ? parseInt(sessionStorage.getItem('contentUnlocked').hashCode())
+        : ''.hashCode();
     if ( token === correctHash) {
         anonymousRemoveCallback(token);
         overlay.style.opacity = '0';
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMessage.style.display = 'none';
         passwordInput.classList.remove('incorrect');
     }else{
-        //what happened here? password changed in the meantime?
+        //what happened to get here? password changed in the meantime?
     }
 
     submitButton.addEventListener('click', checkPassword);
