@@ -4,7 +4,6 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <meta charset="utf-8">
     <!-- Include the CesiumJS JavaScript and CSS files -->
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.123/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.123/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alpencross Revisited</title>
@@ -67,9 +66,24 @@
         if (cleanup) cleanup();
         cleanup = await modalSystem.openDialog();
 </script> moved to main.js, to have more timing contol-->
-<script type="module" src="main.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.123/Build/Cesium/Cesium.js"></script>
 
+<script type="text/javascript">
+    if (typeof Cesium === 'undefined') {
+        console.error('Cesium cdn error');
+        document.write('<script src="dist/backup/Cesium.js"><\/script>');
+        //This wont work correctly anyway, because the Cesiums inner mechanisms rely on relative resource loading
+        alert('Error loading the CesiumJS library. 3rd party CDN is not available :/ ' +
+            '\nPlease try again later. Or consider switching to the Static Map (button in upper left corner)');
+    }
+    if(typeof Chart === 'undefined') {
+        console.error('chartJS cdn error');
+        document.write('<script src="dist/backup/chart.js"><\/script>');
+    }
+</script>
+
+<script type="module" src="main.js"></script>
 <!--<script type="module" src="StaticMap.js"></script> causes some undefined element errors in StaticMap.js-->
 
 <!--
