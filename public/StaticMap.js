@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkbox.addEventListener('change', async () => {
         if (checkbox.checked) {
-            const fileUrl = './geodata/objects/map/compressed_level14_zoom.glb';
+            const fileUrl = './geodata/objects/map/uncompressed_zoom_14.glb';
             const exists = await fileExists(fileUrl);
             if (exists) {
                 switchSrc(fileUrl);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkbox.checked = false;
             }
         } else {
-            switchSrc('./geodata/objects/map/compressed_png_texture.glb');
+            switchSrc('./geodata/objects/map/compressed_png_texture.glb');//this has been compressed to a jpg, so the name doesnt quite fit anymore
         }
     });
 
