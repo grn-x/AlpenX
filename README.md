@@ -1,5 +1,25 @@
 # AlpenX
 
+## About
+See popup text on hosted site
+
+### Installation:
+because of image optimizations i did along the way and not before the inital pre git commit, the version history is a bit bloated. i eagerly recommend a shallow clone should someone try to work with it
+
+Example for the prod branch gh-pages:
+```
+git clone --depth 1 --branch gh-pages https://github.com/grn-x/AlpenX.git Foldername
+```
+
+Should a branch switch be desired, one would need to:
+```
+git remote set-branches origin '*'
+git fetch -v --depth 1 
+git checkout gh-pages-sub
+```
+
+
+
 This project is licensed under the [GNU General Public License v3.0 (GPLv3)](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ## License Summary
