@@ -189,7 +189,7 @@ let mapPin;
 let callable;
 
 const shouldSort = false;       //used to be global variables, though through adding identical parameters
-const devAddPictures = false;   //to the affected functions, they are scoped and overriden anyways
+const devAddPictures = false;   //to the affected functions, they are scoped and overridden anyways
 let isFallbackLoaded = false;
 
 
@@ -1267,7 +1267,7 @@ function initializePin(viewer, initialPosition) {
     const mapPin = viewer.entities.add({
         position: initialPosition,
         model: {
-            uri: 'geodata/objects/figure/floating-map-pin.glb',
+            uri: 'geodata/objects/figure/floatingPin.glb',
             scale: 1000,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             runAnimations: true, // Enable animations
@@ -1409,7 +1409,7 @@ function isEntityInView(entity) {
 
 }
 
-//The following functions were used rigth in the beginning when trying to implement my own version of cesiums
+//The following functions were used right in the beginning when trying to implement my own version of cesiums
 //entity tracked functionality. this was because the cesium tracked entity callback will reset the cams pitch angle and zoom
 // and also moved on every position change, all of which i didnt want. i eventually plan to reimplement this functionality
 function ensureEntityVisible_camreset(entity) {
