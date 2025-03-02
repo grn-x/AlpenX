@@ -2,6 +2,7 @@
 
 ## About
 See popup text on hosted site
+<video loop src="docs/Demo-AlpenX.mp4"> short installation and usage demo </video>
 
 ### Installation:
 because of image optimizations i did along the way and not before the inital pre git commit, the version history is a bit bloated. i eagerly recommend a shallow clone should someone try to work with it
