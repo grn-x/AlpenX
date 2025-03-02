@@ -7,6 +7,12 @@ See popup text on hosted site
 short installation and usage demo 
 </video>
 
+   <video src="docs/Demo-AlpenX.mp4" placeholder="docs/Demo-AlpenX_low-Res" autoplay loop controls muted title="test-title">
+    Sorry, your browser doesn't support HTML 5 video.
+   </video> 
+
+<!-- https://github.com/microsoft/vscode/issues/177816 -->
+
 ### Installation:
 because of image optimizations i did along the way and not before the inital pre git commit, the version history is a bit bloated. i eagerly recommend a shallow clone should someone try to work with it
 
