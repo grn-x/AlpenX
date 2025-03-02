@@ -3,7 +3,7 @@
 ## About
 See popup text on hosted site
 
-<video src="docs/Demo-AlpenX.mp4" loop autoplay muted>
+<video width="320" height="180" src="docs/Demo-AlpenX.mp4" type="video/mp4" loop autoplay muted controls>
 short installation and usage demo 
 </video>
 
