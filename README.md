@@ -3,11 +3,11 @@
 ## About
 See popup text on hosted site
 
-<video width="320" height="180" src="docs/Demo-AlpenX.mp4" type="video/mp4" loop autoplay muted controls>
+<video src="https://github.com/grn-x/AlpenX/blob/main/docs/Demo-AlpenX.mp4" loop autoplay muted controls>
 short installation and usage demo 
 </video>
 
-   <video src="docs/Demo-AlpenX.mp4" placeholder="docs/Demo-AlpenX_low-Res" autoplay loop controls muted title="test-title">
+   <video src="https://github.com/grn-x/AlpenX/blob/main/docs/Demo-AlpenX.mp4" placeholder="docs/Demo-AlpenX_low-Res" autoplay loop controls muted title="test-title">
     Sorry, your browser doesn't support HTML 5 video.
    </video> 
 
