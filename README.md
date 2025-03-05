@@ -3,7 +3,7 @@
 ## About
 See popup text on hosted site
 
-<video src="https://github.com/grn-x/AlpenX/blob/main/docs/Demo-AlpenX.mp4" loop autoplay>
+<video src="https://github.com/grn-x/AlpenX/blob/main/docs/Demo-AlpenX.mp4">
 short installation and usage demo 
 </video>
 
