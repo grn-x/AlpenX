@@ -1,118 +1,164 @@
 # AlpenX
 
-A static web application featuring an interactive 3-dimensional map with geocoded images connected to a lightbox like gallery 
 
-## About The Project
-From the [popup]() on the landing page:
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=flat&logo=GitHub%20Pages&logoColor=white)
+![CesiumJS](https://img.shields.io/badge/CesiumJS-blue.svg)
+![Chart.js](https://img.shields.io/badge/Chart.js-pink.svg)
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=flat&logo=javascript&logoColor=%23F7DF1E)
+![GitHub license](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
+
+A static web application featuring an interactive 3-dimensional map with geocoded images connected to a lightbox gallery.
+
+The gh-pages branch is currently deployed at [grn-x.github.io/AlpenX](https://grn-x.github.io/AlpenX/),
+the gh-pages-sub branch is on track to get officially hosted over the school's servers.
+
+## 📖 About The Project
+
+This project began as a way to preserve and consolidate memories from our Alpine Crossing in July '24. The website features a 3D interactive map with geocoded images that can be viewed in a lightbox like gallery when clicking on map markers.
+
+From the [popup](https://github.com/grn-x/AlpenX/blob/main/public/intro.html) on the landing page:
 > Um die Erlebnisse unserer Alpencross-Tour zu sammeln und noch einmal nacherleben zu können, habe ich über die letzten Monate diese Website geschrieben.
 > <br>
 > Einige Aufnahmen habe ich selber geschossen, aber ohne die vielen Zusendungen von euch, hätte ich die Route niemals so schön vervollständigen können.
 > <br>
 > Vielen Dank an Alexander, Finn, Helena, Jaro, Lukas, Toni, Vijolind und Vincent für das Bereitstellen der Bilder!
 
-This website was created for the "reunion" meeting after our Alpine Crossing tour in Summer of 24.
+<details>
+<summary><a href="https://www.youtube.com/watch?v=6i8zwVIFxQg&list=OLAK5uy_ntyTKmPtSuVGCKd7FPfc7ep68vIobe9VE&index=3"> The Downward Spiral</a> </summary>
+Another motivation for the project was the upcoming reunion a few months after the tour. I not only received plenty of great images
+and materials to fill the site with but also a ton of help from my friends, especially Finn, with whom I was able to reconstruct the route.
 
-I wanted to preserve and consolidate the memories of the tour and make them accessible to everyone who participated.
-After recreating the route with Finn's help and manually geocoding each image to its respective location on the map, I was able t render the images in a lightbox gallery when a marker is clicked.
+I naively thought all that was left to do was geocode the images to their respective locations.
 
-When a marker is clicked, a lightbox gallery opens with the images from that location.
+Literally hundreds of hours later -- lost in an endless cycle of bug discovery -> hotfix -> trust-issue-induced bug hunting -- and after stressing out about missing countless self-imposed deadlines, I somehow got the project running in a presentable state, in the very last night before the reunion of course.
+
+After sacrificing two nights of sleep, I made a desperate last-ditch attempt to call in sick, hoping to catch up on rest before the presentation. But my parents were having none of it. This resulted in an still ongoing war with them, much to the amusement of my friends and teachers.
+</details>
+
+
+
+### ✨ Features
+
+- Interactive 3D map of the Alpine Crossing route
+- Geocoded images connected to map markers
+- Lightbox gallery for viewing images from each location
+- Elevation profile using Chart.js
+
+### 🎬 Demo
 
 <video src="https://github.com/user-attachments/assets/b18dd9e4-dd89-4b64-87fd-5ccb087d3997" loop autoplay muted controls>
-short installation and usage demo 
+Short installation and usage demo 
 </video>
 
-## Getting Started
+## 🚀 Getting Started
 
-### Installing
+
+
+### Installation
 
 The repository features three branches:
-- `main` - the main branch on which the development started
-  - the `public` folder contains the files to be served
-  - the remaining directories and files are either documentation or utilities that where used during development, such as the multiple python scripts in`utils`
-  - even though it is currently based on the same commit as `gh-pages`, this branch should no longer be used for direct development
-- `gh-pages` - In order to host the website on GitHub Pages, the contents of the `public` folder were moved to this branch
-  - this then replaced the `main` branch as the default development branch
-- `gh-pages-sub` - the branch for the development version of the website
-  - Following the concerns of our teacher who was worried about the free availability and resulting overcrowding in the years to come of the carefully chosen route, it was decided 
-that security measures should be implemented to prevent the route from being viewed without a password 
-  - This branch only differs in said mechanisms, the rest of the code is identical to the `gh-pages` branch
-    - Client-Sided Security is nonsensical of course, but it will deter the average user from copying the route
-      - Retrospectively I realize that I couldve done this even more efficiently by encrypting the location coded lookup table
-and the geojson files, only storing the password hash in code, and on a correct enter, reverse the plaintext password to obtain a
-different hash which I couldve used as a private key
-      - This wouldve been much more elegant, but the fact that these files are already on my GitHub, means that if someone really wanted, it wouldnt matter if they were to attempt to bypass the lock or decrypt the files, the solution is only one link away anyways
-        - To be allowed to host this website I needed to implement weak security measures, that avoid 
-           - this branch features the pinnacle of client sided security, as it is not connected to the internet
 
+1. `main` - The original development branch
+  - The `public` folder contains files to be served
+  - Other directories contain documentation and development utilities
+  - Following the push to GitHub, `gh-pages` was created to resolve the need for a dedicated deployment branch, replacing main as the development environment in the process.
+  - No longer used for direct development (currently based on the same commit as `gh-pages`)
 
-because of image optimizations i did along the way and not before the inital pre git commit, the version history is a bit bloated. i eagerly recommend a shallow clone should someone try to work with it
+2. `gh-pages` - The production branch for GitHub Pages hosting
+  - Contents of the `public` folder were moved here
+  - Current default development branch
 
-That is also the reason why the images in the `public` folder of the main branch are heavily compressed
+3. `gh-pages-sub` - Development version with security measures
+  - Implements password protection to prevent unrestricted route access
+  - Identical code to `gh-pages` except for security mechanisms
+  - Client-side security implemented as a deterrent for average users
 
+Due to image optimizations done throughout development, the version history is bloated. A shallow clone is recommended:
 
-Example for the prod branch gh-pages:
-
-```
+```bash
+# Example for the production branch (gh-pages)
 git clone --depth 1 --branch gh-pages https://github.com/grn-x/AlpenX.git Foldername
 ```
 
-Should a branch switch be desired, one would need to:
-```
+To switch branches after a shallow clone:
+
+```bash
 git remote set-branches origin '*'
 git fetch -v --depth 1 
 git checkout gh-pages-sub
 ```
 
+
 ### Prerequisites
 
-This project is a static web application, so it can be hosted on any web server that supports HTML, CSS, and JavaScript.
+This project is a static web application that can be hosted on any web server supporting HTML, CSS, and JavaScript.
 
-To serve the files locally, I use, depending on the environment, either node js `http-server`
+To serve the files locally, I used, depending on the environment either:
 
+#### Node.js `http-server`
+
+```bash
+# Global installation because this is a CLI tool
+npm install http-server -g
+
+# When in either pages-branch
+http-server ./ ;cls
+
+# When in main branch
+http-server ./public ;cls
 ```
-npm install http-server -g    # -g for global installation since this is a CLI tool
 
-http-server ./ ;cls           # when in either pages-branch -> serve the current directory and clear the console on windows
-http-server ./public ;cls     # when in main branch -> serve the public directory and clear the console on windows
+#### Python's `http.server`
+
+```bash
+# When in either pages-branch
+python -m http.server
+
+# When in main branch
+python -m http.server --directory public
 ```
 
-Or python's `http.server`
-
-```
-python -m http.server                      # when in either pages-branch -> serve the current directory
-python -m http.server --directory public   # when in main branch -> serve the public directory
-```
-crtl + c to stop the server on windows
+Use `Ctrl + C` to stop the server.
 
 ### Dependencies
 
 The project uses the following libraries:
-- Chart.js - for the elevation profile
-- CesiumJS - for the interactive dynamic 3D map
-- Lightgallery - for the lightbox gallery
-- model-viewer - for the 3D model viewer used as a static map fallback option in case the CesiumJS map fails to load 
 
-All dependencies have local copies in the `dist` folder, that are, except for the model-viewer library, automatically loaded in case of cdn failures.
+- **Chart.js** - For the elevation profile
+- **CesiumJS** - For the interactive dynamic 3D map
+- **Lightgallery** - For the lightbox gallery
+- **model-viewer** - For the 3D model viewer (fallback if CesiumJS fails)
+
+All dependencies have local copies in the `dist` folder and are automatically loaded if CDN fails (except for model-viewer (find out why in the rage-filled comments i left behind)).
+
+## 🔍 Technical Details
+
+### Entry Point
+
+The `index.html`'s `main.js` script is the invocation source for the application. All functions are documented using JSDoc comments to facilitate easy navigation through the code.
+
+### Note on Security Implementation
+
+Following the concerns of our teacher who was worried about the free availability and therefore possible overcrowding in the years to come of the carefully chosen route, it was decided that security measures should be implemented to prevent the route from being viewed without a password.
+
+Client-Sided Security is nonsensical of course, but it will deter the average user from copying the route. If you are among the 3 people that found their way here and are knowledgeable enough to reproduce the development environment, given these resources, you would've also been able to bypass the lock; this defeats the purpose.
+
+Retrospectively I realize that I could've solved all of this much more securely by encrypting the location coded lookup table and the geojson files, only storing the password hash in code, and on a correct entry, reverse the plaintext password to obtain a different hash which I could've used as a private key.
+But then again, everythings already on GitHub, soo...
 
 
-### Entry-Point
+## ❓ Help
 
-The index.html's main.js script is the invocation source for the application.
-I left meaningful comments and every function is explained using JSDoc. (Which is a dumb thing to do, given that I dont minify the code before deployment)
+If you have any questions, feel free to [open an issue](https://github.com/grn-x/AlpenX/issues) or don't hesitate to contact me directly at <grnx-git@gmail.com>.
 
-Navigating through the code should be straight forward, as I tried to keep it as clean and readable as possible.
+## 📄 License
 
+This project is licensed under the [GNU General Public License v3.0 (GPLv3)](https://www.gnu.org/licenses/gpl-3.0.html), as required not by the use of CesiumJS, but rather Cesium Ion, and underlying datasets.
 
-## Help
-
-If you have any questions, feel absolutely free to open an issue or contact me directly at <grnx-git@gmail.com>
-
-## License
-As a direct consequence of the usage of not only CesiumJS but also Cesium Ion and underlying datasets, this project is required to published under the same license.
-Therefore, this project is licensed under the [GNU General Public License v3.0 (GPLv3)](https://www.gnu.org/licenses/gpl-3.0.html).
-
-###  Summary
-- You are free to use, modify, and distribute this project under GPLv3.
-- Any modifications or derivatives of this project must also be licensed under GPLv3.
+### Summary
+- You are free to use, modify, and distribute this project under GPLv3
+- Any modifications or derivatives must also be licensed under GPLv3
 
 For full license details, refer to the `LICENSE` file in this repository.
